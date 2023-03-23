@@ -1,5 +1,7 @@
 from django.db import models
 from shop.models import Product
+
+# store the coupon that was applied to each order
 from decimal import Decimal
 from django.core.validators import MinValueValidator, \
                                    MaxValueValidator
@@ -18,6 +20,8 @@ class Order(models.Model):
     updated = models.DateTimeField(auto_now=True)
     paid = models.BooleanField(default=False)
     braintree_id = models.CharField(max_length=150, blank=True)
+    
+    # These fields allow us to store an optional coupon for the order and the discount percentage applied with the coupon. The discount is stored in the related Coupon object, but we include it in the Order model to preserve it if the coupon is modified or deleted. We set on_delete to models.SET_NULL so that if the coupon gets deleted, the coupon field is set to Null.
     coupon = models.ForeignKey(Coupon,
                                related_name='orders',
                                null=True,
@@ -33,6 +37,7 @@ class Order(models.Model):
     def __str__(self):
         return 'Order {}'.format(self.id)
 
+    # take into account the discount applied if there is one.
     def get_total_cost(self):
         total_cost = sum(item.get_cost() for item in self.items.all())
         return total_cost - total_cost * (self.discount / Decimal('100'))
