@@ -16,9 +16,12 @@ class Cart(object):
             # save an empty cart in the session
             cart = self.session[settings.CART_SESSION_ID] = {}
         self.cart = cart
+        
+        # we try to get the coupon_id session key from the current session and store its value in the Cart object
         # store current applied coupon
         self.coupon_id = self.session.get('coupon_id')
 
+    # iterate through the items contained in the cart and access the related Product instances
     def __iter__(self):
         """
         Iterate over the items in the cart and get the products 
@@ -37,12 +40,14 @@ class Cart(object):
             item['total_price'] = item['price'] * item['quantity']
             yield item
     
+    # a way to return the number of total items in the cart
     def __len__(self):
         """
         Count all items in the cart.
         """
         return sum(item['quantity'] for item in self.cart.values())
 
+    # add products to the cart or update their quantity.
     def add(self, product, quantity=1, update_quantity=False):
         """
         Add a product to the cart or update its quantity.
@@ -61,6 +66,7 @@ class Cart(object):
         # mark the session as "modified" to make sure it gets saved
         self.session.modified = True
 
+    # removing products from the cart
     def remove(self, product):
         """
         Remove a product from the cart.
@@ -70,14 +76,24 @@ class Cart(object):
             del self.cart[product_id]
             self.save()
 
+    # calculate the total cost of the items in the cart
     def get_total_price(self):
         return sum(Decimal(item['price']) * item['quantity'] for item in self.cart.values())
 
+    # clear the cart session
     def clear(self):
         # remove cart from session
         del self.session[settings.CART_SESSION_ID]
         self.save()
 
+        
+        
+        
+    # coupon(): We define this method as property. If the cart contains a coupon_id attribute, the Coupon object with the given ID is returned.
+    # get_discount(): If the cart contains a coupon, we retrieve its discount rate and return the amount to be deducted from the total amount of the cart.
+    # get_total_price_after_discount(): We return the total amount of the cart after deducting the amount returned by the get_discount() method.
+    # The Cart class is now prepared to handle a coupon applied to the current session and apply the corresponding discount.
+        
     @property
     def coupon(self):
         if self.coupon_id:
