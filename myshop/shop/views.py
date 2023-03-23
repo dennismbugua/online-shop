@@ -4,11 +4,16 @@ from cart.forms import CartAddProductForm
 from .recommender import Recommender
 
 
+# In order to display the product catalog, we need to create a view
+# to list all the products or filter products by a given category.
+
 def product_list(request, category_slug=None):
     category = None
     categories = Category.objects.all()
+    # filter the QuerySet with available=True to retrieve only available products
     products = Product.objects.filter(available=True)
     if category_slug:
+        # use an optional category_slug parameter to optionally filter products by a given category.
         language = request.LANGUAGE_CODE
         category = get_object_or_404(Category,
                                      translations__language_code=language,
@@ -21,7 +26,12 @@ def product_list(request, category_slug=None):
                    'products': products})
 
 
+# retrieve and display a single product
 def product_detail(request, id, slug):
+    # expects the id and slug parameters in order to retrieve the
+    # Product instance. We can get this instance just through the ID
+    # since it's a unique attribute. However, we include the slug in
+    # the URL to build SEO-friendly URLs for products.
     language = request.LANGUAGE_CODE
     product = get_object_or_404(Product,
                                 id=id,
