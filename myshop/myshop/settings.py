@@ -37,11 +37,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
     'shop.apps.ShopConfig',
     'cart.apps.CartConfig',
     'orders.apps.OrdersConfig',
     'payment.apps.PaymentConfig',
     'coupons.apps.CouponsConfig',
+    
     'rosetta',
     'parler',
     'localflavor',
@@ -67,15 +69,24 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                # sets the boolean debug and sql_queries variables in the context representing the list of SQL queries executed in the request
                 'django.template.context_processors.debug',
+                # sets the request variable in the context
                 'django.template.context_processors.request',
+                # sets the user variable in the request
                 'django.contrib.auth.context_processors.auth',
+                # sets a messages variable in the context containing all messages that have been generated using the messages framework
                 'django.contrib.messages.context_processors.messages',
+
+                # context processor, we instantiate the cart using the request object and make it available for the templates as a variable named cart.
                 'cart.context_processors.cart',
             ],
         },
     },
 ]
+
+# Django also enables django.template.context_processors.csrf to avoid cross-site request forgery attacks. This context processor is not present in the settings, but it is always enabled and cannot be turned off for security reasons.
+
 
 WSGI_APPLICATION = 'myshop.wsgi.application'
 
@@ -151,9 +162,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 # Braintree settings
-BRAINTREE_MERCHANT_ID = ''
-BRAINTREE_PUBLIC_KEY = ''
-BRAINTREE_PRIVATE_KEY = ''
+# Note that we use Environment.Sandbox for integrating the sandbox. Once you go live and create a real account, you will need to change this to Environment.Production. Braintree will provide you with a new merchant ID and private/public keys for the production environment.
+BRAINTREE_MERCHANT_ID = '45zxhw3rm7vp3hkk'
+BRAINTREE_PUBLIC_KEY = '4mhmgz8s8wgd9ccx'
+BRAINTREE_PRIVATE_KEY = '96b4a717e70253f92c6d558e36d3930e'
 
 from braintree import Configuration, Environment
 
