@@ -20,7 +20,7 @@ class Category(TranslatableModel):
     def __str__(self):
         return self.name
 
-    def get_absolute_url(self):
+    def get_absolute_url(self): # the convention to retrieve the URL for a given object
             return reverse('shop:product_list_by_category',
                            args=[self.slug])
 
@@ -36,11 +36,21 @@ class Product(TranslatableModel):
                                  on_delete=models.CASCADE)
     image = models.ImageField(upload_to='products/%Y/%m/%d',
                               blank=True)
-    
+    # For the price field, we use DecimalField instead of FloatField to avoid rounding issues.
     price = models.DecimalField(max_digits=10, decimal_places=2)
     available = models.BooleanField(default=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    
+# use the index_together meta option to specify
+# an index for the id and slug fields together.
+# We define this index because we plan to query
+# products by both id and slug. Both fields are indexed
+# together to improve performances for queries that utilize
+# the two fields.
+    
+    
+    
 
     #class Meta:
     #    ordering = ('name',)
@@ -49,6 +59,6 @@ class Product(TranslatableModel):
     def __str__(self):
         return self.name
 
-    def get_absolute_url(self):
+    def get_absolute_url(self): # the convention to retrieve the URL for a given object
             return reverse('shop:product_detail',
                            args=[self.id, self.slug])
