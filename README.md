@@ -1,5 +1,33 @@
 # Building-an-Online-Shop
 
+Your online shop will enable clients to browse products, add them to the cart, apply discount codes, go through the checkout process, pay with a credit card, and obtain an invoice. You will also implement a recommendation engine to recommend products to your customers, and you will use internationalization to offer your site in multiple languages.
+
+**Functionalities include:**
+
+- Create a product catalog
+- Build a shopping cart using Django sessions
+- Create custom context processors
+- Manage customer orders
+- Configure Celery in your project with RabbitMQ as a message broker
+- Send asynchronous notifications to customers using Celery
+- Monitor Celery using Flower
+
+- Integrate the Stripe payment gateway into your project
+- Process credit card payments with Stripe
+- Handle payment notifications
+- Export orders to CSV files
+- Create custom views for the administration site
+- Generate PDF invoices dynamically
+
+- Creating a coupon system
+- Applying coupons to the shopping cart
+- Applying coupons to orders
+- Creating coupons for Stripe Checkout
+- Storing products that are usually bought together
+- Building a product recommendation engine with Redis
+
+
+
 Build a basic online shop. Create a catalog of products and implement a shopping cart using Django sessions. Create custom context processors and launch asynchronous tasks using Celery.
 
 Integrate a payment gateway into your site to let users pay by credit card. Extend the administration site to export orders to CSV format and generate PDF invoices
