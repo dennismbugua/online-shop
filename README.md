@@ -180,7 +180,7 @@ You can find the Celery documentation at http://docs.celeryproject.org/en/latest
 
 **Installing Celery**
 
-- pip install celery
+`pip install celery`
 
 Celery requires a message broker in order to handle requests from an external source. The broker takes care of sending messages to Celery workers, which process tasks as they receive them.
 
@@ -192,7 +192,7 @@ There are several options to choose as a message broker for Celery, including ke
 
 After installing it, launch RabbitMQ using the following command from the shell:
 
-- rabbitmq-server
+`rabbitmq-server`
 
 You will see output that ends with the following line:
 
@@ -206,7 +206,7 @@ We are going to create an asynchronous task to send an email notification to our
 
 Open another shell and start the Celery worker from your project directory, using the following command:
 
-- celery -A myshop worker -l info
+`celery -A myshop worker -l info`
 
 ---
 
@@ -214,11 +214,11 @@ Open another shell and start the Celery worker from your project directory, usin
 
 You might want to monitor the asynchronous tasks that are executed. Flower is a web-based tool for monitoring Celery. You can install Flower using this command:
 
-- pip install flower
+`pip install flower`
 
 Once installed, you can launch Flower by running the following command from your project directory:
 
-- celery -A myshop flower
+`celery -A myshop flower`
 
 Open http://localhost:5555/dashboard in your browser. You will be able to see the active Celery workers and asynchronous task statistics
 
@@ -265,11 +265,11 @@ We will create a view for processing payments. The whole checkout process will 
 
 Open a shell and run RabbitMQ with the following command:
 
-- rabbitmq-server
+`rabbitmq-server`
 
 Open another shell and start the Celery worker from your project directory with the following command:
 
-- celery -A myshop worker -l info
+`celery -A myshop worker -l info`
 
 Open one more shell and start the development server with this command:
 
@@ -464,7 +464,7 @@ Edit the main urls.py file of the myshop project and add translation strings to 
 
 Open the shell and run the next command to update the message files with the new translations:
 
-- django-admin makemessages --all
+`django-admin makemessages --all`
 
 Make sure the development server is running. Open http://127.0.0.1:8000/en/rosetta/ in your browser and click the Myshop link under the Spanish section. Now you will see the URL patterns for translation. You can click on Untranslated only to only see the strings that have not been translated yet. You can now translate the URLs.
 
@@ -494,7 +494,7 @@ Normally, you will set the USE_L10N setting to True and let Django apply the for
 
 Django offers a {% localize %} template tag that allows you to turn on/off localization for template fragments. This gives you control over localized formatting. You will have to load the l10n tags to be able to use this template tag. The following is an example of how to turn localization on and off in a template:
 
-
+```
 {% load l10n %}
 
 {% localize on %}
@@ -504,7 +504,7 @@ Django offers a {% localize %} template tag that allows you to turn on/off local
 {% localize off %}
   {{ value }}
 {% endlocalize %}
-
+```
 
 Django also offers the localize and unlocalize template filters to force or avoid localization of a value. These filters can be applied as follows:
 
