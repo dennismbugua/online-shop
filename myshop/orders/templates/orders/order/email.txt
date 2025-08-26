@@ -1,0 +1,55 @@
+Hello {{ order.first_name }} {{ order.last_name }},
+
+🎉 CONGRATULATIONS! Your order has been confirmed! 🎉
+
+═══════════════════════════════════════════════════════
+📦 ORDER SUMMARY
+═══════════════════════════════════════════════════════
+
+Order Number: #{{ order.id }}
+Order Date: {{ order.created|date:"F d, Y" }}
+Payment Status: ✅ PAID
+Total Amount: ${{ order.get_total_cost|floatformat:"2" }}
+
+📋 ITEMS ORDERED:
+{% for item in order.items.all %}
+• {{ item.product.name }}
+  Quantity: {{ item.quantity }}
+  Price: ${{ item.get_cost|floatformat:"2" }}
+{% endfor %}
+
+📍 SHIPPING ADDRESS:
+{{ order.address }}
+{{ order.city }}, {{ order.postal_code }}
+
+═══════════════════════════════════════════════════════
+🚀 WHAT HAPPENS NEXT?
+═══════════════════════════════════════════════════════
+
+✨ Your order is being prepared by our team
+✨ You'll receive shipping confirmation within 24-48 hours
+✨ Track your package using the tracking number we'll send
+✨ Enjoy your new purchases!
+
+═══════════════════════════════════════════════════════
+💬 NEED HELP?
+═══════════════════════════════════════════════════════
+
+Our friendly customer support team is here to assist you!
+
+📞 Phone: 1-800-MYSHOP
+📧 Email: support@myshop.com
+💬 Live Chat: Available on our website
+
+═══════════════════════════════════════════════════════
+
+Thank you for choosing MyShop! 
+
+We appreciate your business and look forward to serving you again.
+
+Best regards,
+The MyShop Team
+
+---
+© 2025 MyShop. All rights reserved.
+Your favorite online shopping destination ❤️

@@ -1,0 +1,580 @@
+/* ===== ADMIN DASHBOARD ENHANCEMENTS ===== */
+
+/* Root variables for consistent theming */
+:root {
+    --primary-color: #667eea;
+    --primary-dark: #5a67d8;
+    --secondary-color: #764ba2;
+    --accent-color: #f093fb;
+    --success-color: #48bb78;
+    --warning-color: #ed8936;
+    --error-color: #f56565;
+    --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    --hover-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    --border-radius: 12px;
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Global enhancements */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    margin: 0;
+    padding: 0;
+}
+
+/* Enhanced header with gradient and animations */
+#grp-header {
+    background: var(--background-gradient) !important;
+    box-shadow: none !important;
+    border: none !important;
+    position: relative;
+    overflow: hidden;
+    animation: slideDown 0.6s ease-out;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+}
+
+#grp-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shimmer 3s infinite;
+}
+
+/* Enhanced breadcrumbs to connect with header */
+.grp-breadcrumbs, div.breadcrumbs {
+    background: var(--background-gradient) !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0.75rem 2rem !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+    animation: slideDown 0.6s ease-out 0.1s both;
+}
+
+.grp-breadcrumbs a, div.breadcrumbs a {
+    color: rgba(255, 255, 255, 0.9) !important;
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition-smooth);
+}
+
+.grp-breadcrumbs a:hover, div.breadcrumbs a:hover {
+    color: white !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.grp-breadcrumbs, div.breadcrumbs {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Add subtle separator between breadcrumb items */
+.grp-breadcrumbs a:after, div.breadcrumbs a:after {
+    content: ' › ';
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0 0.5rem;
+    font-weight: 300;
+}
+
+.grp-breadcrumbs a:last-child:after, div.breadcrumbs a:last-child:after {
+    content: '';
+    margin: 0;
+}
+
+/* Enhanced header logo/brand area */
+#grp-header .grp-branding, #grp-header .branding {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* Better visual hierarchy for the admin title */
+#grp-header h1 {
+    position: relative;
+    z-index: 2;
+    margin: 0 !important;
+}
+
+#grp-header h1:before {
+    content: '⚡';
+    margin-right: 0.5rem;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Enhanced navigation */
+#grp-nav {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: var(--card-shadow);
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+    margin-top: 0 !important;
+}
+
+/* Main content area adjustments */
+#grp-content {
+    margin-top: 0 !important;
+    padding-top: 2rem !important;
+}
+
+/* Ensure smooth transition between navbar elements */
+#grp-header + .grp-breadcrumbs,
+#grp-header + div.breadcrumbs {
+    margin-top: 0 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+@keyframes fadeInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Enhanced title styling */
+#grp-header h1, #grp-header h1 a {
+    color: white !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+    font-weight: 700 !important;
+    font-size: 2.2rem !important;
+    letter-spacing: 0.5px;
+    animation: fadeInScale 1s ease-out 0.5s both;
+    text-decoration: none !important;
+    display: block;
+    padding: 1.5rem 2rem !important;
+}
+
+#grp-header h1 a:hover {
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 3px 12px rgba(0, 0, 0, 0.5) !important;
+    transform: translateY(-1px);
+    transition: var(--transition-smooth);
+}
+
+@keyframes fadeInScale {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Content area enhancements */
+#grp-content {
+    background: transparent !important;
+    padding: 2rem;
+    animation: fadeIn 1s ease-out 0.3s both;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Enhanced module styling */
+.grp-module, .module {
+    background: white !important;
+    border-radius: var(--border-radius) !important;
+    box-shadow: var(--card-shadow) !important;
+    border: none !important;
+    margin-bottom: 2rem !important;
+    overflow: hidden;
+    transition: var(--transition-smooth);
+    animation: slideInLeft 0.6s ease-out both;
+}
+
+.grp-module:hover, .module:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--hover-shadow) !important;
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Enhanced module headers */
+.grp-module h2, .module h2 {
+    background: var(--background-gradient) !important;
+    color: white !important;
+    margin: 0 !important;
+    padding: 1rem 1.5rem !important;
+    font-weight: 600;
+    border-radius: 0 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.grp-module h2::after, .module h2::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--accent-color);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Enhanced table styling */
+.grp-results table, table {
+    border-collapse: collapse !important;
+    width: 100%;
+    background: white;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.grp-results th, th {
+    background: var(--background-gradient) !important;
+    color: white !important;
+    padding: 1rem !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.875rem;
+}
+
+.grp-results tr, tr {
+    transition: var(--transition-smooth);
+}
+
+.grp-results tbody tr:hover, tbody tr:hover {
+    background: rgba(102, 126, 234, 0.1) !important;
+    transform: scale(1.01);
+}
+
+.grp-results td, td {
+    padding: 1rem !important;
+    border-bottom: 1px solid #e2e8f0;
+    color: #2d3748 !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+/* Ensure all table links are visible */
+.grp-results td a, td a, table a {
+    color: var(--primary-color) !important;
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition-smooth);
+}
+
+.grp-results td a:hover, td a:hover, table a:hover {
+    color: var(--primary-dark) !important;
+    text-decoration: underline;
+}
+
+/* Make sure all text in admin is readable */
+.grp-results, .results, .module, .grp-module {
+    color: #2d3748 !important;
+}
+
+.grp-results .action-counter, .action-counter {
+    color: #4a5568 !important;
+    font-weight: 500;
+}
+
+/* Enhanced form styling */
+.grp-form .grp-row, .form-row {
+    margin-bottom: 1.5rem;
+    animation: slideInRight 0.5s ease-out both;
+}
+
+.grp-form .grp-row:nth-child(even) {
+    animation-delay: 0.1s;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.grp-form input, .grp-form select, .grp-form textarea, 
+input[type="text"], input[type="email"], input[type="password"], 
+select, textarea {
+    border: 2px solid #e2e8f0 !important;
+    border-radius: var(--border-radius) !important;
+    padding: 0.75rem 1rem !important;
+    transition: var(--transition-smooth);
+    font-size: 1rem;
+}
+
+.grp-form input:focus, .grp-form select:focus, .grp-form textarea:focus,
+input:focus, select:focus, textarea:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    outline: none !important;
+    transform: scale(1.02);
+}
+
+/* Enhanced button styling */
+.grp-button, .button, input[type="submit"], .btn {
+    background: var(--background-gradient) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: var(--border-radius) !important;
+    padding: 0.75rem 2rem !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: var(--transition-bounce);
+    position: relative;
+    overflow: hidden;
+}
+
+.grp-button:hover, .button:hover, input[type="submit"]:hover, .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3) !important;
+}
+
+.grp-button:active, .button:active, input[type="submit"]:active, .btn:active {
+    transform: translateY(0);
+}
+
+/* Success/Warning/Error styling */
+.grp-success, .success {
+    background: linear-gradient(135deg, #48bb78, #38a169) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: var(--border-radius) !important;
+    padding: 1rem 1.5rem !important;
+    animation: bounceIn 0.6s ease-out;
+}
+
+.grp-warning, .warning {
+    background: linear-gradient(135deg, #ed8936, #dd6b20) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: var(--border-radius) !important;
+    padding: 1rem 1.5rem !important;
+    animation: bounceIn 0.6s ease-out;
+}
+
+.grp-error, .error {
+    background: linear-gradient(135deg, #f56565, #e53e3e) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: var(--border-radius) !important;
+    padding: 1rem 1.5rem !important;
+    animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Enhanced sidebar */
+#grp-navigation {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    animation: slideInLeft 0.8s ease-out 0.4s both;
+}
+
+.grp-navigation-item {
+    transition: var(--transition-smooth);
+    border-radius: var(--border-radius);
+    margin: 0.25rem;
+}
+
+.grp-navigation-item:hover {
+    background: var(--background-gradient) !important;
+    color: white !important;
+    transform: translateX(5px);
+}
+
+/* Loading animation */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--background-gradient);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition-smooth);
+}
+
+.loading-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Notification toast */
+.toast {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    background: white;
+    color: #333;
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    border-left: 4px solid var(--primary-color);
+    transform: translateX(100%);
+    transition: var(--transition-smooth);
+    z-index: 1001;
+}
+
+.toast.show {
+    transform: translateX(0);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    #grp-content {
+        padding: 1rem;
+    }
+    
+    .grp-module, .module {
+        margin-bottom: 1rem !important;
+    }
+    
+    .grp-form input, .grp-form select, .grp-form textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    /* Mobile navbar adjustments */
+    #grp-header h1, #grp-header h1 a {
+        font-size: 1.8rem !important;
+        padding: 1rem 1.5rem !important;
+    }
+    
+    .grp-breadcrumbs, div.breadcrumbs {
+        padding: 0.5rem 1.5rem !important;
+        font-size: 0.9rem;
+    }
+    
+    #grp-nav {
+        border-radius: 0 !important;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color: #818cf8;
+        --primary-dark: #6366f1;
+        --background-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    }
+    
+    body {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+    
+    .grp-module, .module {
+        background: #1e293b !important;
+        color: #e2e8f0;
+    }
+}
+
+/* Accessibility enhancements */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus indicators for keyboard navigation */
+*:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+    .toast, .loading-overlay {
+        display: none !important;
+    }
+    
+    .grp-module, .module {
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+    }
+}

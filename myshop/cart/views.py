@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from shop.models import Product
 from .cart import Cart
 from .forms import CartAddProductForm
 from coupons.forms import CouponApplyForm # include the coupon system in the cart's detail view
 from shop.recommender import Recommender
+import json
 
 
 # adding products to the cart or updating quantities for existing products.
@@ -21,11 +24,34 @@ def cart_add(request, product_id):
     cart = Cart(request)
     product = get_object_or_404(Product, id=product_id)
     form = CartAddProductForm(request.POST)
+    
     if form.is_valid():
         cd = form.cleaned_data
         cart.add(product=product,
                  quantity=cd['quantity'],
                  update_quantity=cd['update'])
+        
+        # Check if it's an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # Return JSON response for AJAX requests
+            response_data = {
+                'success': True,
+                'cart_total': float(cart.get_total_price()),
+                'cart_total_after_discount': float(cart.get_total_price_after_discount()),
+                'cart_items_count': len(cart),
+                'message': 'Cart updated successfully'
+            }
+            return JsonResponse(response_data)
+    else:
+        # Handle form validation errors for AJAX requests
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            response_data = {
+                'success': False,
+                'errors': form.errors,
+                'message': 'Invalid form data'
+            }
+            return JsonResponse(response_data, status=400)
+    
     return redirect('cart:cart_detail')
 
 

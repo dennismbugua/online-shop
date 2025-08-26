@@ -9,6 +9,11 @@ class CategoryAdmin(TranslatableAdmin):
 
     def get_prepopulated_fields(self, request, obj=None):
             return {'slug': ('name',)}
+    
+    class Media:
+        css = {
+            'all': ('admin/css/admin_improvements.css',)
+        }
         
 # use the prepopulated_fields attribute to specify fields where
 # the value is automatically set using the value of other fields.
@@ -25,6 +30,11 @@ class ProductAdmin(TranslatableAdmin):
 
     def get_prepopulated_fields(self, request, obj=None):
             return {'slug': ('name',)}
+    
+    class Media:
+        css = {
+            'all': ('admin/css/admin_improvements.css',)
+        }
 
         
 # use the list_editable attribute in the ProductAdmin class to

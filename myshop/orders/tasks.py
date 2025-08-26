@@ -1,5 +1,6 @@
 from celery import shared_task
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from .models import Order
 
 
@@ -11,16 +12,29 @@ from .models import Order
 @shared_task
 def order_created(order_id):
     """
-    Task to send an e-mail notification when an order is 
+    Task to send a stunning e-mail notification when an order is 
     successfully created.
     """
     order = Order.objects.get(id=order_id) # always recommended to pass only IDs to task functions and lookup objects when the task is executed
-    subject = 'Order nr. {}'.format(order.id)
-    message = 'Dear {},\n\nYou have successfully placed an order.\
-                  Your order id is {}.'.format(order.first_name,
-                                               order.id)
-    mail_sent = send_mail(subject,
-                          message,
-                          'admin@myshop.com',
-                          [order.email])
+    
+    subject = f'🎉 Order Received! Order #{order.id} - MyShop 🛍️'
+    
+    # Create HTML email content
+    html_message = render_to_string('orders/order/email.html', {'order': order})
+    
+    # Create plain text content using template
+    text_message = render_to_string('orders/order/email.txt', {'order': order})
+    
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=text_message,
+        from_email='🛍️ MyShop Team <noreply@myshop.com>',
+        to=[order.email],
+        reply_to=['💬 Support Team <support@myshop.com>']
+    )
+    
+    # Attach HTML version
+    email.attach_alternative(html_message, "text/html")
+    
+    mail_sent = email.send()
     return mail_sent

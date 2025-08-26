@@ -9,6 +9,8 @@
 import braintree
 from django.shortcuts import render, redirect, get_object_or_404 
 from orders.models import Order 
+from django.contrib import messages
+from django.conf import settings
 
 # When a payment is successful, we will send an automatic email to our customers including the generated PDF invoice
 from django.template.loader import render_to_string
@@ -20,6 +22,21 @@ from io import BytesIO
 def payment_process(request):
     order_id = request.session.get('order_id')
     order = get_object_or_404(Order, id=order_id)
+
+    # Check if Braintree is properly configured
+    if (not hasattr(settings, 'BRAINTREE_MERCHANT_ID') or 
+        settings.BRAINTREE_MERCHANT_ID in ['', 'sandbox_merchant_id', 'your_merchant_id']):
+        
+        # For development - mark order as paid and redirect
+        order.paid = True
+        order.braintree_id = f"DEV_ORDER_{order.id}"
+        order.save()
+        
+        messages.success(request, 
+                        'Order completed successfully! (Development mode - no payment processing)')
+        
+        # Redirect to order created page instead of payment done
+        return redirect('orders:order_created', order_id=order.id)
 
     if request.method == 'POST':
         # retrieve nonce
@@ -43,13 +60,27 @@ def payment_process(request):
             # set up your SMTP settings in the settings.py file of the project to send emails.
 
 
-            # create invoice e-mail
-            subject = 'My Shop - Invoice no. {}'.format(order.id)
-            message = 'Please, find attached the invoice for your recent purchase.'
-            email = EmailMessage(subject,
-                                 message,
-                                 'admin@myshop.com',
-                                 [order.email])
+            # create invoice e-mail with stunning HTML template
+            subject = f'🎉 Payment Confirmed! Order #{order.id} - MyShop 🛍️'
+            
+            # Create HTML email content
+            html_message = render_to_string('orders/order/email.html', {'order': order})
+            
+            # Create plain text content using template
+            text_message = render_to_string('orders/order/email.txt', {'order': order})
+            
+            from django.core.mail import EmailMultiAlternatives
+            
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=text_message,
+                from_email='🛍️ MyShop Team <noreply@myshop.com>',
+                to=[order.email],
+                reply_to=['💬 Support Team <support@myshop.com>']
+            )
+            
+            # Attach HTML version
+            email.attach_alternative(html_message, "text/html")
 
             # generate PDF
             html = render_to_string('orders/order/pdf.html', {'order': order})
@@ -64,7 +95,8 @@ def payment_process(request):
             # send e-mail
             email.send()
 
-            return redirect('payment:done')
+            # Redirect to order created page instead of payment done
+            return redirect('orders:order_created', order_id=order.id)
         else:
             return redirect('payment:canceled')
     else:

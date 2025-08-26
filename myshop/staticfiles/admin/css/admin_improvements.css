@@ -1,0 +1,345 @@
+/* Enhanced admin sidebar navigation with better UX */
+
+/* Ensure the sidebar navigation stays visible with improved styling */
+#nav-sidebar {
+    display: block !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 300px !important;
+    height: 100vh !important;
+    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%) !important;
+    overflow-y: auto !important;
+    z-index: 1000 !important;
+    padding: 0 !important;
+    box-shadow: 4px 0 12px rgba(0,0,0,0.15) !important;
+    border-right: 3px solid #3498db !important;
+}
+
+/* Custom scrollbar for sidebar */
+#nav-sidebar::-webkit-scrollbar {
+    width: 8px !important;
+}
+
+#nav-sidebar::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.1) !important;
+}
+
+#nav-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3) !important;
+    border-radius: 4px !important;
+}
+
+#nav-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.5) !important;
+}
+
+/* Sidebar header styling */
+#nav-sidebar .nav-sidebar-header {
+    background: #1a252f !important;
+    padding: 20px !important;
+    border-bottom: 2px solid #3498db !important;
+    margin-bottom: 10px !important;
+}
+
+/* Style the sidebar links with better visibility */
+#nav-sidebar a {
+    color: #ecf0f1 !important;
+    text-decoration: none !important;
+    padding: 14px 20px !important;
+    display: block !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+    transition: all 0.3s ease !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    position: relative !important;
+}
+
+#nav-sidebar a:hover {
+    background: linear-gradient(90deg, #3498db 0%, #2980b9 100%) !important;
+    color: #ffffff !important;
+    padding-left: 30px !important;
+    transform: translateX(5px) !important;
+}
+
+#nav-sidebar a:before {
+    content: "▶" !important;
+    position: absolute !important;
+    left: 8px !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+    color: #ffffff !important;
+}
+
+#nav-sidebar a:hover:before {
+    opacity: 1 !important;
+}
+
+/* Style sidebar section headers with better contrast */
+#nav-sidebar h2 {
+    color: #3498db !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    padding: 20px 20px 8px 20px !important;
+    margin: 0 !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    border-bottom: 1px solid rgba(52, 152, 219, 0.3) !important;
+}
+
+/* Active/current page styling */
+#nav-sidebar a.current-page,
+#nav-sidebar a[aria-current="page"] {
+    background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    border-left: 4px solid #f39c12 !important;
+}
+
+/* Adjust the main content area to account for the wider sidebar */
+#content {
+    margin-left: 300px !important;
+    width: calc(100% - 300px) !important;
+    min-height: 100vh !important;
+    padding: 25px !important;
+    background: #f8f9fa !important;
+}
+
+/* Adjust the header to account for the sidebar */
+#header {
+    margin-left: 300px !important;
+    width: calc(100% - 300px) !important;
+    background: linear-gradient(90deg, #2c3e50 0%, #3498db 100%) !important;
+    border-bottom: 3px solid #2980b9 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+/* Adjust the main container */
+.main {
+    margin-left: 300px !important;
+    width: calc(100% - 300px) !important;
+}
+
+/* Enhanced breadcrumbs */
+.breadcrumbs {
+    background: linear-gradient(90deg, #3498db 0%, #2980b9 100%) !important;
+    margin-left: 300px !important;
+    width: calc(100% - 300px) !important;
+    padding: 12px 25px !important;
+    color: #ffffff !important;
+    font-weight: 500 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.breadcrumbs a {
+    color: #ecf0f1 !important;
+    text-decoration: none !important;
+}
+
+.breadcrumbs a:hover {
+    color: #ffffff !important;
+    text-decoration: underline !important;
+}
+
+/* Adjust the main content area to account for the sidebar */
+#content {
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+    min-height: 100vh !important;
+    padding: 20px !important;
+}
+
+/* Adjust the header to account for the sidebar */
+#header {
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+    background: #417690 !important;
+    border-bottom: 1px solid #205067 !important;
+}
+
+/* Adjust the main container */
+.main {
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+}
+
+/* Ensure the breadcrumbs are properly positioned */
+.breadcrumbs {
+    background: #79aec8 !important;
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+    padding: 10px 20px !important;
+}
+
+/* Ensure all content containers work with sidebar */
+#content-main, .content-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+}
+
+/* Make sure change-list and change-form work properly */
+.change-list, .change-form {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+/* Make sure the sidebar content is properly styled */
+#nav-sidebar .module {
+    margin-bottom: 25px !important;
+    background: rgba(255,255,255,0.05) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+#nav-sidebar .module h2 {
+    background: linear-gradient(90deg, #1a252f 0%, #2c3e50 100%) !important;
+    margin: 0 !important;
+    padding: 15px 20px !important;
+    color: #3498db !important;
+    font-size: 13px !important;
+    border-bottom: 2px solid #3498db !important;
+}
+
+#nav-sidebar .module ul {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#nav-sidebar .module li {
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+#nav-sidebar .module li:last-child {
+    border-bottom: none !important;
+}
+
+#nav-sidebar .module li a {
+    padding: 12px 20px !important;
+    border-bottom: none !important;
+    font-size: 13px !important;
+}
+
+/* Enhanced content area styling */
+#content-main, .content-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    background: #ffffff !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    padding: 25px !important;
+}
+
+/* Make sure change-list and change-form work properly with enhanced styling */
+.change-list, .change-form {
+    width: 100% !important;
+    max-width: none !important;
+    background: #ffffff !important;
+    border-radius: 8px !important;
+    padding: 20px !important;
+}
+
+/* Enhanced table styling for better readability */
+.change-list .results table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+.change-list .results table th {
+    background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    color: #495057 !important;
+    font-weight: 600 !important;
+    padding: 15px 12px !important;
+    border-bottom: 2px solid #dee2e6 !important;
+    text-align: left !important;
+}
+
+.change-list .results table td {
+    padding: 12px !important;
+    border-bottom: 1px solid #f1f3f4 !important;
+    vertical-align: middle !important;
+}
+
+.change-list .results table tr:hover {
+    background: #f8f9fa !important;
+}
+
+/* Enhanced form styling */
+.form-row {
+    margin-bottom: 20px !important;
+    padding: 15px !important;
+    background: #f8f9fa !important;
+    border-radius: 6px !important;
+    border-left: 4px solid #3498db !important;
+}
+
+.form-row label {
+    color: #2c3e50 !important;
+    font-weight: 600 !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+}
+
+/* Enhanced button styling */
+.button, input[type="submit"], input[type="button"], .submit-row input {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 20px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    margin-right: 10px !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.button:hover, input[type="submit"]:hover, input[type="button"]:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #1f4e79 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+.button.default, .submit-row .default {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important;
+}
+
+.button.default:hover, .submit-row .default:hover {
+    background: linear-gradient(135deg, #229954 0%, #1e8449 100%) !important;
+}
+
+/* Responsive design improvements */
+@media (max-width: 1200px) {
+    #nav-sidebar {
+        width: 250px !important;
+    }
+    
+    #content, #header, .main, .breadcrumbs {
+        margin-left: 250px !important;
+        width: calc(100% - 250px) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    #nav-sidebar {
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s ease !important;
+    }
+    
+    #nav-sidebar.mobile-open {
+        transform: translateX(0) !important;
+    }
+    
+    #content, #header, .main, .breadcrumbs {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}

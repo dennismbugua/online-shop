@@ -7,4 +7,9 @@ class CouponAdmin(admin.ModelAdmin):
                     'discount', 'active']
     list_filter = ['active', 'valid_from', 'valid_to']
     search_fields = ['code']
+    
+    class Media:
+        css = {
+            'all': ('admin/css/admin_improvements.css',)
+        }
 admin.site.register(Coupon, CouponAdmin)

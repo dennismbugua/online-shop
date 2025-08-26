@@ -7,108 +7,2387 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container">
-    <h1 class="mb-4">{% trans "Your shopping cart" %}</h1>
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th scope="col">{% trans "Product" %}</th>
-            <th scope="col">{% trans "Quantity" %}</th>
-            <th scope="col">{% trans "Remove" %}</th>
-            <th scope="col">{% trans "Unit price" %}</th>
-            <th scope="col">{% trans "Price" %}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in cart %}
-            {% with product=item.product %}
-              <tr>
-                <td>
-                  <div>
-                    <h5>{{ product.name }}</h5>
-                    <p>{% trans "Category" %}: {{ product.category }}</p>
-                  </div>
-                </td>
-                <td>
-                  <form action="{% url "cart:cart_add" product.id %}" method="post">
-                    <div class="input-group">
-                      {{ item.update_quantity_form.quantity }}
-                      <!-- <button type="submit" class="btn btn-sm btn-primary ms-2">{{ item.update_quantity_form.update }}</button> -->
-                      <button type="submit" class="btn btn-sm btn-primary ms-2" title="{% trans 'Update' %}">
-                        {{ item.update_quantity_form.update }}<i class="fas fa-sync-alt"></i>  <!-- Font Awesome icon for update -->
-                      </button>
-                      {% csrf_token %}
-                    </div>
-                  </form>
-                </td>
-                <td>
-                  <a href="{% url "cart:cart_remove" product.id %}" class="btn btn-sm btn-danger">{% trans "Remove" %}</a>
-                  <!-- <a href="{% url 'cart:cart_remove' product.id %}" class="btn btn-sm btn-danger" title="{% trans 'Remove' %}">
-                    <i class="fas fa-trash-alt"></i>
-                  </a> -->
-                </td>
-                <td class="num">${{ item.price }}</td>
-                <td class="num">${{ item.total_price }}</td>
-              </tr>
-            {% endwith %}
-          {% endfor %}
-          {% if cart.coupon %}
-            <tr class="subtotal">
-              <td colspan="4">{% trans "Subtotal" %}</td>
-              <td class="num">${{ cart.get_total_price|floatformat:"2" }}</td>
-            </tr>
-            <tr>
-              {% blocktrans with code=cart.coupon.code discount=cart.coupon.discount %}
-                <td colspan="4">"{{ code }}" coupon ({{ discount }}% off)</td>
-              {% endblocktrans %}
-              <td class="num neg">
-                - ${{ cart.get_discount|floatformat:"2" }}
-              </td>
-            </tr>
-          {% endif %}
-          <tr class="total">
-            <td colspan="4">{% trans "Total" %}</td>
-            <td class="num">
-              ${{ cart.get_total_price_after_discount|floatformat:"2" }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    {% if recommended_products %}
-      <div class="recommendations">
-        <h3 class="mb-4">{% trans "People who bought this also bought" %}</h3>
-        <div class="row row-cols-1 row-cols-md-3 g-3">
-          {% for p in recommended_products %}
-            <div class="col">
-              <div class="card h-100">
-                <div class="card-body">
-                  <h5 class="card-title"><a href="{{ p.get_absolute_url }}">{{ p.name }}</a></h5>
-                  <p class="card-text">{% trans "Category" %}: {{ p.category }}</p>
-                </div>
-              </div>
+<style>
+  /* Prevent body scroll during page load */
+  body {
+    overflow: hidden;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200px 0;
+    }
+    100% {
+      background-position: calc(200px + 100%) 0;
+    }
+  }
+
+  .cart-container {
+    animation: fadeInUp 0.8s ease-out;
+    height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 2rem 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    position: relative;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .container-fluid {
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow-x: hidden;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cart-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    animation: slideInLeft 0.6s ease-out;
+    flex-shrink: 0;
+  }
+
+  .cart-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  .cart-subtitle {
+    color: #6c757d;
+    font-size: 1.1rem;
+    font-weight: 300;
+  }
+
+  .cart-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+    margin: 0 auto 1.5rem auto;
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .cart-table {
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .cart-table thead th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1.5rem 1rem;
+    border: none;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cart-table thead th:first-child {
+    border-top-left-radius: 0;
+    width: 35%;
+  }
+
+  .cart-table thead th:nth-child(2) {
+    width: 15%;
+  }
+
+  .cart-table thead th:nth-child(3) {
+    width: 15%;
+  }
+
+  .cart-table thead th:nth-child(4) {
+    width: 17.5%;
+  }
+
+  .cart-table thead th:last-child {
+    border-top-right-radius: 0;
+    width: 17.5%;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+
+  .cart-item-row {
+    transition: all 0.3s ease;
+    animation: slideInLeft 0.6s ease-out;
+    transform-origin: center center;
+  }
+
+  .cart-item-row:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    z-index: 1;
+    position: relative;
+  }
+
+  .cart-item-row td {
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 0;
+  }
+
+  .cart-item-row td:first-child {
+    white-space: normal;
+    max-width: none;
+  }
+
+  .product-info {
+    min-width: 0;
+  }
+
+  .product-info h5 {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .product-info h5:hover {
+    color: #667eea;
+  }
+
+  .product-category {
+    color: #718096;
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+
+  .quantity-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .quantity-input {
+    width: 80px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .quantity-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+  }
+
+  .btn-update {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-update:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    animation: pulse 0.6s ease-in-out;
+  }
+
+  .btn-remove {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+  }
+
+  .btn-remove:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+    color: white;
+  }
+
+  .price-cell {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #2d3748;
+  }
+
+  .total-row {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    font-weight: 700;
+    font-size: 1.2rem;
+  }
+
+  .total-row td {
+    padding: 2rem 1rem;
+  }
+
+  .subtotal-row {
+    background: rgba(102, 126, 234, 0.05);
+    font-weight: 600;
+  }
+
+  .coupon-row {
+    background: rgba(34, 197, 94, 0.1);
+    color: #059669;
+    font-weight: 600;
+  }
+
+  .recommendations-section {
+    animation: fadeInUp 0.8s ease-out 0.4s both;
+    margin-top: 1.5rem;
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .recommendations-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #2d3748;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .recommendation-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: none;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  .recommendation-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .recommendation-card .card-body {
+    padding: 1.5rem;
+  }
+
+  .recommendation-card h5 a {
+    color: #2d3748;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .recommendation-card h5 a:hover {
+    color: #667eea;
+  }
+
+  .coupon-section {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    animation: fadeInUp 0.8s ease-out 0.6s both;
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .coupon-input {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+  }
+
+  .coupon-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+  }
+
+  .coupon-input::placeholder {
+    color: #a0aec0;
+    font-style: italic;
+  }
+
+  .price-updating {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 5px;
+    padding: 2px 8px;
+  }
+
+  .cart-updating {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  .instant-update-feedback {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .instant-update-feedback::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.4), transparent);
+    animation: slideSuccess 0.8s ease-out;
+  }
+
+  @keyframes slideSuccess {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  .quantity-updating-feedback {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quantity-updating-feedback::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3), transparent);
+    animation: slideUpdate 1s ease-in-out;
+  }
+
+  @keyframes slideUpdate {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  .btn-apply {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  }
+
+  .btn-apply:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  }
+
+  .action-buttons {
+    animation: fadeInUp 0.8s ease-out 0.8s both;
+  }
+
+  .btn-continue {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
+  }
+
+  .btn-continue:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(107, 114, 128, 0.4);
+    color: white;
+  }
+
+  .btn-checkout {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 2rem;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+  }
+
+  .btn-checkout:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+    animation: pulse 0.6s ease-in-out;
+    color: white;
+  }
+
+  .empty-cart {
+    text-align: center;
+    padding: 4rem 2rem;
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  .empty-cart-icon {
+    font-size: 4rem;
+    color: #cbd5e0;
+    margin-bottom: 1rem;
+  }
+
+  /* Custom Notification Styles */
+  .notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    pointer-events: none;
+  }
+
+  .notification {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 15px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    max-width: 400px;
+    min-width: 300px;
+    transform: translateX(450px) scale(0.8);
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    pointer-events: auto;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .notification.show {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+
+  .notification.hide {
+    transform: translateX(450px) scale(0.8);
+    opacity: 0;
+  }
+
+  .notification::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shimmerNotification 2s ease-in-out;
+  }
+
+  @keyframes shimmerNotification {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  .notification-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .notification-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    animation: bounceIcon 0.6s ease-out 0.2s both;
+  }
+
+  .notification-warning .notification-icon {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+  }
+
+  .notification-success .notification-icon {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  }
+
+  .notification-error .notification-icon {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+  }
+
+  .notification-info .notification-icon {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+  }
+
+  @keyframes bounceIcon {
+    0% {
+      transform: scale(0) rotate(180deg);
+    }
+    50% {
+      transform: scale(1.2) rotate(0deg);
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+    }
+  }
+
+  .notification-text {
+    flex: 1;
+  }
+
+  .notification-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+    color: #1f2937;
+  }
+
+  .notification-message {
+    font-size: 0.9rem;
+    color: #6b7280;
+    line-height: 1.4;
+  }
+
+  .notification-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(107, 114, 128, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #6b7280;
+    font-size: 0.8rem;
+  }
+
+  .notification-close:hover {
+    background: rgba(107, 114, 128, 0.2);
+    color: #374151;
+    transform: scale(1.1);
+  }
+
+  .notification-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 0 0 15px 15px;
+    transform-origin: left;
+    animation: progressBar 4s linear forwards;
+  }
+
+  @keyframes progressBar {
+    0% {
+      transform: scaleX(1);
+    }
+    100% {
+      transform: scaleX(0);
+    }
+  }
+
+  /* Pulse effect for notification icon */
+  .notification-icon::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: inherit;
+    transform: translate(-50%, -50%);
+    animation: pulseRing 2s ease-out infinite;
+    opacity: 0.3;
+  }
+
+  @keyframes pulseRing {
+    0% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.3;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1.5);
+      opacity: 0;
+    }
+  }
+
+  /* Shake animation for form validation */
+  @keyframes shake {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+      transform: translateX(5px);
+    }
+  }
+
+  /* Enhanced coupon input focus state */
+  .coupon-input.error {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    animation: errorPulse 0.6s ease-in-out;
+  }
+
+  @keyframes errorPulse {
+    0% {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+    50% {
+      border-color: #dc2626;
+      box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.2);
+    }
+    100% {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+  }
+
+  /* Special styling for coupon-related notifications */
+  .notification-coupon-error {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+    border-left: 4px solid #ef4444;
+  }
+
+  .notification-coupon-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%);
+    border-left: 4px solid #10b981;
+  }
+
+  .notification-coupon-error .notification-icon::after {
+    animation: pulseRingError 1.5s ease-out infinite;
+  }
+
+  .notification-coupon-success .notification-icon::after {
+    animation: pulseRingSuccess 1.5s ease-out infinite;
+  }
+
+  @keyframes pulseRingError {
+    0% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.3;
+      background: #ef4444;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1.8);
+      opacity: 0;
+      background: #ef4444;
+    }
+  }
+
+  @keyframes pulseRingSuccess {
+    0% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.3;
+      background: #10b981;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1.8);
+      opacity: 0;
+      background: #10b981;
+    }
+  }
+
+  /* Stunning Confirmation Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    padding: 2rem;
+  }
+
+  .modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .modal-container {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    max-width: 480px;
+    width: 100%;
+    transform: scale(0.8) translateY(50px);
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .modal-overlay.show .modal-container {
+    transform: scale(1) translateY(0);
+  }
+
+  .modal-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shimmerModal 2s ease-in-out;
+  }
+
+  @keyframes shimmerModal {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  .modal-header {
+    padding: 2rem 2rem 1rem 2rem;
+    text-align: center;
+    position: relative;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+    border-bottom: 1px solid rgba(239, 68, 68, 0.1);
+  }
+
+  .modal-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem auto;
+    font-size: 2rem;
+    color: white;
+    box-shadow: 0 12px 30px rgba(239, 68, 68, 0.4);
+    animation: modalIconBounce 0.6s ease-out 0.2s both;
+    position: relative;
+  }
+
+  .modal-icon::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: inherit;
+    transform: translate(-50%, -50%);
+    animation: pulseRingModal 2s ease-out infinite;
+    opacity: 0.3;
+  }
+
+  @keyframes modalIconBounce {
+    0% {
+      transform: scale(0) rotate(180deg);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.2) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  @keyframes modalAttention {
+    0%, 100% {
+      transform: scale(1) translateY(0);
+    }
+    25% {
+      transform: scale(1.02) translateY(-5px);
+    }
+    75% {
+      transform: scale(0.98) translateY(2px);
+    }
+  }
+
+  @keyframes pulseRingModal {
+    0% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.3;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1.6);
+      opacity: 0;
+    }
+  }
+
+  .modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+    animation: slideInFromTop 0.6s ease-out 0.3s both;
+  }
+
+  @keyframes slideInFromTop {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(107, 114, 128, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #6b7280;
+    font-size: 1rem;
+  }
+
+  .modal-close:hover {
+    background: rgba(107, 114, 128, 0.2);
+    color: #374151;
+    transform: scale(1.1) rotate(90deg);
+  }
+
+  .modal-body {
+    padding: 1.5rem 2rem;
+    animation: slideInFromBottom 0.6s ease-out 0.4s both;
+  }
+
+  @keyframes slideInFromBottom {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .product-preview {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(249, 250, 251, 0.8);
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .product-image-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #9ca3af;
+    flex-shrink: 0;
+  }
+
+  .product-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .product-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.5rem 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .product-info-text {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .modal-footer {
+    padding: 1.5rem 2rem 2rem 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    animation: slideInFromBottom 0.6s ease-out 0.5s both;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    background: rgba(249, 250, 251, 0.5);
+  }
+
+  .btn-cancel {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 140px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-cancel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(107, 114, 128, 0.4);
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  }
+
+  .btn-cancel::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+  }
+
+  .btn-cancel:active::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  .btn-confirm-remove {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 140px;
+    position: relative;
+    overflow: hidden;
+    animation: buttonPulse 2s ease-in-out infinite;
+  }
+
+  .btn-confirm-remove:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+    animation: none;
+  }
+
+  .btn-confirm-remove:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    animation: none;
+  }
+
+  .btn-confirm-remove:disabled:hover {
+    transform: none;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+  }
+
+  @keyframes buttonPulse {
+    0%, 100% {
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+    50% {
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+    }
+  }
+
+  .btn-confirm-remove::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+  }
+
+  .btn-confirm-remove:active::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  /* Mobile responsiveness for modal */
+  @media (max-width: 576px) {
+    .modal-overlay {
+      padding: 1rem;
+    }
+
+    .modal-container {
+      border-radius: 20px;
+    }
+
+    .modal-header {
+      padding: 1.5rem 1.5rem 1rem 1.5rem;
+    }
+
+    .modal-icon {
+      width: 60px;
+      height: 60px;
+      font-size: 1.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+    }
+
+    .modal-body {
+      padding: 1rem 1.5rem;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem 1.5rem 1.5rem;
+      flex-direction: column;
+    }
+
+    .btn-cancel,
+    .btn-confirm-remove {
+      width: 100%;
+      min-width: auto;
+    }
+
+    .product-preview {
+      flex-direction: column;
+      text-align: center;
+      gap: 0.75rem;
+    }
+
+    .product-name {
+      white-space: normal;
+    }
+  }
+  @media (max-width: 1200px) {
+    .container-fluid {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .container-fluid {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    .cart-title {
+      font-size: 2rem;
+    }
+    
+    .cart-table {
+      font-size: 0.9rem;
+    }
+    
+    .cart-table thead th,
+    .cart-item-row td {
+      padding: 1rem 0.5rem;
+    }
+    
+    .quantity-form {
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    
+    .quantity-input {
+      width: 60px;
+    }
+    
+    .btn-update,
+    .btn-remove {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
+    
+    .action-buttons .row > div {
+      margin-bottom: 1rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .container-fluid {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+    
+    .cart-container {
+      padding: 1rem 0;
+      height: 100vh;
+    }
+    
+    .cart-header {
+      margin-bottom: 1rem;
+    }
+    
+    .cart-title {
+      font-size: 1.8rem;
+    }
+    
+    .coupon-section {
+      padding: 1.5rem;
+    }
+    
+    .recommendations-section {
+      margin-top: 2rem;
+    }
+  }
+
+  /* Loading animation for table rows */
+  .cart-item-row {
+    animation-delay: calc(var(--row-index) * 0.1s);
+  }
+</style>
+
+  <div class="cart-container">
+    <!-- Custom Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+    
+    <!-- Stunning Confirmation Modal -->
+    <div class="modal-overlay" id="confirmationModal">
+      <div class="modal-container">
+        <div class="modal-header">
+          <div class="modal-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <h3 class="modal-title">Remove Product</h3>
+          <button class="modal-close" onclick="hideConfirmationModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="product-preview">
+            <div class="product-image-placeholder">
+              <i class="fas fa-box"></i>
             </div>
-          {% endfor %}
+            <div class="product-details">
+              <h4 class="product-name" id="modalProductName">Product Name</h4>
+              <p class="product-info-text">Are you sure you want to remove this item from your cart?</p>
+              <p class="product-info-text" style="font-weight: 600; color: #dc2626; margin-top: 0.5rem;">
+                <i class="fas fa-exclamation-circle me-1"></i>Please choose one of the options below to continue.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div style="width: 100%; text-align: center; margin-bottom: 1rem;">
+            <small style="color: #6b7280; font-weight: 500;">
+              <i class="fas fa-hand-pointer me-1"></i>Choose an option to continue
+            </small>
+          </div>
+          <button class="btn btn-cancel" onclick="hideConfirmationModal()">
+            <i class="fas fa-arrow-left me-1"></i>Keep in Cart
+          </button>
+          <button class="btn btn-confirm-remove" id="confirmRemoveBtn">
+            <i class="fas fa-trash-alt me-1"></i>Yes, Remove
+          </button>
         </div>
       </div>
-    {% endif %}
-    <hr>
-    <div class="row">
-      <div class="col-md-6">
-        <p>{% trans "Apply a coupon" %}:</p>
-        <form action="{% url "coupons:apply" %}" method="post">
-          <div class="input-group mb-3">
-            {{ coupon_apply_form }}
-            <button type="submit" class="btn btn-outline-primary">{% trans "Apply" %}</button>
-            {% csrf_token %}
-          </div>
-        </form>
+    </div>
+    
+    <div class="container-fluid">
+      <div class="cart-header">
+        <h1 class="cart-title">{% trans "Your shopping cart" %}</h1>
+        <p class="cart-subtitle">{% trans "Review your items and proceed to checkout" %}</p>
       </div>
-      <div class="col-md-6 d-flex justify-content-md-end align-items-center">
-        <a href="{% url "shop:product_list" %}" class="btn btn-light me-3">{% trans "Continue shopping" %}</a>
-        <a href="{% url "orders:order_create" %}" class="btn btn-primary">{% trans "Checkout" %}</a>
+      {% if cart %}
+        <div class="cart-card">
+          <div class="table-responsive">
+            <table class="table cart-table">
+              <thead>
+                <tr>
+                  <th scope="col">{% trans "Product" %}</th>
+                  <th scope="col">{% trans "Quantity" %}</th>
+                  <th scope="col">{% trans "Remove" %}</th>
+                  <th scope="col">{% trans "Unit price" %}</th>
+                  <th scope="col">{% trans "Price" %}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in cart %}
+                  {% with product=item.product %}
+                    <tr class="cart-item-row" style="--row-index: {{ forloop.counter }};" data-product-id="{{ product.id }}">
+                      <td>
+                        <div class="product-info">
+                          <h5>{{ product.name }}</h5>
+                          <p class="product-category">{% trans "Category" %}: {{ product.category }}</p>
+                        </div>
+                      </td>
+                      <td>
+                        <form action="{% url "cart:cart_add" product.id %}" method="post" class="quantity-form" data-product-id="{{ product.id }}">
+                          <input type="number" 
+                                 name="quantity" 
+                                 value="{{ item.quantity }}" 
+                                 min="1" 
+                                 max="99" 
+                                 class="quantity-input" 
+                                 data-original-value="{{ item.quantity }}" 
+                                 data-unit-price="{{ item.price }}"
+                                 data-product-id="{{ product.id }}">
+                          <input type="hidden" name="update" value="True">
+                          <button type="submit" class="btn btn-update" title="{% trans 'Update' %}" style="display: none;">
+                            <i class="fas fa-sync-alt"></i>
+                          </button>
+                          {% csrf_token %}
+                        </form>
+                      </td>
+                      <td>
+                        <a href="{% url "cart:cart_remove" product.id %}" class="btn btn-remove" title="{% trans 'Remove' %}" data-product-id="{{ product.id }}">
+                          <i class="fas fa-trash-alt"></i>
+                        </a>
+                      </td>
+                      <td class="price-cell unit-price">${{ item.price }}</td>
+                      <td class="price-cell item-total" data-product-id="{{ product.id }}">${{ item.total_price }}</td>
+                    </tr>
+                  {% endwith %}
+                {% endfor %}
+                {% if cart.coupon %}
+                  <tr class="subtotal-row">
+                    <td colspan="4"><strong>{% trans "Subtotal" %}</strong></td>
+                    <td class="price-cell" id="cart-subtotal">${{ cart.get_total_price|floatformat:"2" }}</td>
+                  </tr>
+                  <tr class="coupon-row">
+                    {% blocktrans with code=cart.coupon.code discount=cart.coupon.discount %}
+                      <td colspan="4">
+                        <i class="fas fa-tag"></i> "{{ code }}" coupon ({{ discount }}% off)
+                      </td>
+                    {% endblocktrans %}
+                    <td class="price-cell" id="coupon-discount">
+                      - ${{ cart.get_discount|floatformat:"2" }}
+                    </td>
+                  </tr>
+                {% endif %}
+                <tr class="total-row">
+                  <td colspan="4"><strong>{% trans "Total" %}</strong></td>
+                  <td class="price-cell" id="cart-total">
+                    <strong>${{ cart.get_total_price_after_discount|floatformat:"2" }}</strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% else %}
+        <div class="cart-card">
+          <div class="empty-cart">
+            <div class="empty-cart-icon">
+              <i class="fas fa-shopping-cart"></i>
+            </div>
+            <h3>{% trans "Your cart is empty" %}</h3>
+            <p class="text-muted">{% trans "Add some products to get started!" %}</p>
+            <a href="{% url "shop:product_list" %}" class="btn btn-checkout mt-3">
+              {% trans "Start Shopping" %}
+            </a>
+          </div>
+        </div>
+      {% endif %}
+      {% if recommended_products %}
+        <div class="recommendations-section">
+          <h3 class="recommendations-title">
+            <i class="fas fa-star text-warning me-2"></i>
+            {% trans "People who bought this also bought" %}
+          </h3>
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for p in recommended_products %}
+              <div class="col">
+                <div class="card recommendation-card h-100">
+                  <div class="card-body text-center">
+                    <h5 class="card-title">
+                      <a href="{{ p.get_absolute_url }}">{{ p.name }}</a>
+                    </h5>
+                    <p class="card-text product-category">
+                      <i class="fas fa-tag me-1"></i>{% trans "Category" %}: {{ p.category }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="coupon-section">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <h4 class="mb-3">
+              <i class="fas fa-percent text-success me-2"></i>
+              {% trans "Apply a coupon" %}
+            </h4>
+            <form action="{% url "coupons:apply" %}" method="post" id="coupon-form">
+              <div class="input-group">
+                <input autocomplete="off" type="text" name="code" class="form-control coupon-input" placeholder="{% trans 'Enter coupon code (optional)' %}" value="{% if cart.coupon %}{{ cart.coupon.code }}{% endif %}">
+                <button type="submit" class="btn btn-apply" id="apply-coupon-btn">
+                  <i class="fas fa-check me-1"></i>{% trans "Apply" %}
+                </button>
+                {% csrf_token %}
+              </div>
+              <small class="text-muted mt-2 d-block">
+                <i class="fas fa-info-circle me-1"></i>
+                {% trans "Enter a valid coupon code to get a discount on your order" %}
+              </small>
+            </form>
+          </div>
+          <div class="col-md-6">
+            <div class="action-buttons text-md-end mt-4 mt-md-0">
+              <a href="{% url "shop:product_list" %}" class="btn btn-continue me-3">
+                <i class="fas fa-arrow-left me-1"></i>{% trans "Continue shopping" %}
+              </a>
+              {% if cart %}
+                <a href="{% url "orders:order_create" %}" class="btn btn-checkout">
+                  <i class="fas fa-credit-card me-1"></i>{% trans "Checkout" %}
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Django Messages for JavaScript Processing -->
+  <script id="django-messages" type="application/json">
+    [
+      {% for message in messages %}
+      {
+        "level": "{{ message.level_tag }}",
+        "message": "{{ message.message|escapejs }}",
+        "tags": "{{ message.tags }}"
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]
+  </script>
+
+  <script>
+    // Cart data for instant calculations
+    let cartData = {
+      items: {},
+      coupon: null,
+      subtotal: 0,
+      total: 0
+    };
+
+    // Initialize coupon data
+    {% if cart.coupon %}
+    cartData.coupon = {
+      code: "{{ cart.coupon.code }}",
+      discount: {{ cart.coupon.discount }}
+    };
+    {% endif %}
+
+    // Initialize totals
+    cartData.subtotal = {{ cart.get_total_price|default:0 }};
+    cartData.total = {{ cart.get_total_price_after_discount|default:0 }};
+
+    // Restore body scrolling after page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Allow body scrolling after content is loaded
+      setTimeout(() => {
+        document.body.style.overflow = 'auto';
+      }, 100);
+      
+      // Process Django messages
+      processDjangoMessages();
+      
+      // Initial header cart update to sync with current state
+      updateHeaderCartInfo();
+    });
+
+    // Custom Notification System
+    function showNotification(type, title, message, duration = 4000) {
+      const container = document.getElementById('notificationContainer');
+      
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${type}`;
+      
+      // Check if this is a coupon-related notification
+      const isCouponMessage = message.toLowerCase().includes('coupon') || title.toLowerCase().includes('coupon');
+      
+      if (isCouponMessage) {
+        if (type === 'error') {
+          notification.classList.add('notification-coupon-error');
+        } else if (type === 'success') {
+          notification.classList.add('notification-coupon-success');
+        }
+      }
+      
+      // Get appropriate icon
+      let icon = '';
+      switch(type) {
+        case 'warning':
+          icon = 'fas fa-exclamation-triangle';
+          break;
+        case 'success':
+          icon = isCouponMessage ? 'fas fa-tags' : 'fas fa-check-circle';
+          break;
+        case 'error':
+          icon = isCouponMessage ? 'fas fa-ban' : 'fas fa-times-circle';
+          break;
+        case 'info':
+          icon = 'fas fa-info-circle';
+          break;
+        default:
+          icon = 'fas fa-bell';
+      }
+      
+      notification.innerHTML = `
+        <div class="notification-content">
+          <div class="notification-icon">
+            <i class="${icon}"></i>
+          </div>
+          <div class="notification-text">
+            <div class="notification-title">${title}</div>
+            <div class="notification-message">${message}</div>
+          </div>
+        </div>
+        <button class="notification-close" onclick="hideNotification(this.parentElement)">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="notification-progress"></div>
+      `;
+      
+      // Add to container
+      container.appendChild(notification);
+      
+      // Trigger show animation
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 100);
+      
+      // Auto-hide after duration
+      setTimeout(() => {
+        hideNotification(notification);
+      }, duration);
+      
+      return notification;
+    }
+
+    function hideNotification(notification) {
+      if (notification && notification.classList.contains('show')) {
+        notification.classList.remove('show');
+        notification.classList.add('hide');
+        
+        setTimeout(() => {
+          if (notification.parentElement) {
+            notification.parentElement.removeChild(notification);
+          }
+        }, 500);
+      }
+    }
+
+    // Show success notification
+    function showSuccessNotification(title, message) {
+      return showNotification('success', title, message);
+    }
+
+    // Show warning notification
+    function showWarningNotification(title, message) {
+      return showNotification('warning', title, message);
+    }
+
+    // Show error notification
+    function showErrorNotification(title, message) {
+      return showNotification('error', title, message);
+    }
+
+    // Show info notification
+    function showInfoNotification(title, message) {
+      return showNotification('info', title, message);
+    }
+
+    // Process Django messages and show as notifications
+    function processDjangoMessages() {
+      const messagesScript = document.getElementById('django-messages');
+      if (messagesScript) {
+        try {
+          const messages = JSON.parse(messagesScript.textContent);
+          
+          messages.forEach((message, index) => {
+            // Delay each message slightly to create a staggered effect
+            setTimeout(() => {
+              let notificationType = 'info';
+              let title = '{% trans "Notification" %}';
+              
+              // Map Django message levels to notification types
+              switch(message.level) {
+                case 'success':
+                  notificationType = 'success';
+                  title = '{% trans "Success!" %}';
+                  break;
+                case 'error':
+                  notificationType = 'error';
+                  title = '{% trans "Error" %}';
+                  break;
+                case 'warning':
+                  notificationType = 'warning';
+                  title = '{% trans "Warning" %}';
+                  break;
+                case 'info':
+                  notificationType = 'info';
+                  title = '{% trans "Information" %}';
+                  break;
+                default:
+                  // Handle Django's level numbers
+                  if (message.tags.includes('error')) {
+                    notificationType = 'error';
+                    title = '{% trans "Invalid Coupon" %}';
+                  } else if (message.tags.includes('success')) {
+                    notificationType = 'success';
+                    title = '{% trans "Coupon Applied!" %}';
+                  } else if (message.tags.includes('warning')) {
+                    notificationType = 'warning';
+                    title = '{% trans "Coupon Warning" %}';
+                  }
+              }
+              
+              // Show the notification with enhanced duration for coupon messages
+              const duration = notificationType === 'error' ? 6000 : 5000;
+              showNotification(notificationType, title, message.message, duration);
+              
+              // If it's a coupon error, also shake the coupon input
+              if (notificationType === 'error' && message.message.toLowerCase().includes('coupon')) {
+                const couponInput = document.querySelector('input[name="code"]');
+                if (couponInput) {
+                  couponInput.classList.add('error');
+                  couponInput.style.animation = 'shake 0.5s ease-in-out';
+                  
+                  // Clear the invalid coupon code
+                  setTimeout(() => {
+                    couponInput.value = '';
+                    couponInput.focus();
+                    couponInput.style.animation = '';
+                  }, 500);
+                  
+                  // Remove error class after animation
+                  setTimeout(() => {
+                    couponInput.classList.remove('error');
+                  }, 1000);
+                }
+              }
+              
+              // If it's a success, add celebration effect
+              if (notificationType === 'success' && message.message.toLowerCase().includes('coupon')) {
+                // Add a subtle pulse effect to the total
+                const totalElement = document.getElementById('cart-total');
+                if (totalElement) {
+                  totalElement.style.animation = 'pulse 1s ease-in-out 3';
+                  setTimeout(() => {
+                    totalElement.style.animation = '';
+                  }, 3000);
+                }
+              }
+              
+            }, index * 300); // Stagger messages by 300ms
+          });
+          
+          // Remove the script tag after processing
+          messagesScript.remove();
+          
+        } catch (error) {
+          console.error('Error processing Django messages:', error);
+        }
+      }
+    }
+
+    // Stunning Modal Functions
+    let pendingRemoveUrl = null;
+
+    function showConfirmationModal(productName, removeUrl) {
+      const modal = document.getElementById('confirmationModal');
+      const productNameElement = document.getElementById('modalProductName');
+      const confirmBtn = document.getElementById('confirmRemoveBtn');
+      
+      // Set product name
+      productNameElement.textContent = productName;
+      
+      // Store the remove URL for later use
+      pendingRemoveUrl = removeUrl;
+      
+      // Show the modal with stunning animation
+      modal.classList.add('show');
+      
+      // Add event listener to confirm button
+      confirmBtn.onclick = function() {
+        confirmRemoval();
+      };
+      
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden';
+      
+      // Focus trap for accessibility - focus on the confirm button
+      setTimeout(() => {
+        confirmBtn.focus();
+      }, 400);
+      
+      // Add keyboard navigation
+      modal.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const cancelBtn = modal.querySelector('.btn-cancel');
+          const currentFocus = document.activeElement;
+          
+          if (currentFocus === confirmBtn) {
+            cancelBtn.focus();
+          } else {
+            confirmBtn.focus();
+          }
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          const currentFocus = document.activeElement;
+          if (currentFocus === confirmBtn || currentFocus === modal.querySelector('.btn-cancel')) {
+            currentFocus.click();
+          }
+        }
+      });
+      
+      // Add a subtle shake animation to draw attention
+      setTimeout(() => {
+        const modalContainer = document.querySelector('.modal-container');
+        modalContainer.style.animation = 'modalAttention 0.6s ease-in-out';
+        setTimeout(() => {
+          modalContainer.style.animation = '';
+        }, 600);
+      }, 500);
+    }
+
+    function hideConfirmationModal() {
+      const modal = document.getElementById('confirmationModal');
+      
+      // Only hide if not in loading state
+      const confirmBtn = document.getElementById('confirmRemoveBtn');
+      if (confirmBtn.disabled) {
+        return; // Don't allow closing while removing
+      }
+      
+      // Hide the modal
+      modal.classList.remove('show');
+      
+      // Clear pending removal
+      pendingRemoveUrl = null;
+      
+      // Restore body scroll
+      document.body.style.overflow = 'auto';
+      
+      // Remove event listeners
+      confirmBtn.onclick = null;
+      
+      // Reset button state
+      confirmBtn.innerHTML = '<i class="fas fa-trash-alt me-1"></i>Yes, Remove';
+      confirmBtn.disabled = false;
+      
+      // Reset modal container state
+      const modalContainer = document.querySelector('.modal-container');
+      modalContainer.style.transform = '';
+      modalContainer.style.opacity = '';
+    }
+
+    function confirmRemoval() {
+      if (!pendingRemoveUrl) return;
+      
+      const confirmBtn = document.getElementById('confirmRemoveBtn');
+      const productName = document.getElementById('modalProductName').textContent;
+      
+      // Show loading state
+      confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Removing...';
+      confirmBtn.disabled = true;
+      
+      // Add removing animation to modal
+      const modalContainer = document.querySelector('.modal-container');
+      modalContainer.style.transform = 'scale(0.95)';
+      modalContainer.style.opacity = '0.7';
+      
+      // Perform the removal
+      fetch(pendingRemoveUrl, {
+        method: 'GET', // Cart remove uses GET
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          // Hide modal first
+          hideConfirmationModal();
+          
+          // Show success notification
+          setTimeout(() => {
+            showSuccessNotification(
+              '{% trans "Product Removed" %}',
+              `{% trans "The product" %} "${productName}" {% trans "has been successfully removed from your cart." %}`
+            );
+          }, 300);
+          
+          // Reload the page to update cart display
+          setTimeout(() => {
+            window.location.reload();
+          }, 800);
+          
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      })
+      .catch(error => {
+        console.error('Error removing product:', error);
+        
+        // Reset button state
+        confirmBtn.innerHTML = '<i class="fas fa-trash-alt me-1"></i>Yes, Remove';
+        confirmBtn.disabled = false;
+        
+        // Reset modal state
+        modalContainer.style.transform = '';
+        modalContainer.style.opacity = '';
+        
+        // Show error notification
+        showErrorNotification(
+          '{% trans "Removal Failed" %}',
+          '{% trans "Failed to remove the product. Please try again or refresh the page." %}'
+        );
+      });
+    }
+
+    // Close modal when clicking outside (only if not in loading state)
+    document.addEventListener('click', function(e) {
+      const modal = document.getElementById('confirmationModal');
+      const confirmBtn = document.getElementById('confirmRemoveBtn');
+      
+      // Only allow closing if clicking on the overlay and not in loading state
+      if (e.target === modal && !confirmBtn.disabled) {
+        // Add a subtle warning animation to indicate the user should make a choice
+        const modalContainer = document.querySelector('.modal-container');
+        modalContainer.style.animation = 'modalAttention 0.6s ease-in-out';
+        setTimeout(() => {
+          modalContainer.style.animation = '';
+        }, 600);
+        
+        // Show a brief instruction notification
+        showInfoNotification(
+          '{% trans "Please Choose an Option" %}',
+          '{% trans "Click either Keep in Cart or Yes Remove to continue." %}'
+        );
+      }
+    });
+
+    // Close modal with Escape key (only if not in loading state)
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('confirmationModal');
+        const confirmBtn = document.getElementById('confirmRemoveBtn');
+        
+        if (modal.classList.contains('show') && !confirmBtn.disabled) {
+          // Instead of closing, just show instruction
+          const modalContainer = document.querySelector('.modal-container');
+          modalContainer.style.animation = 'modalAttention 0.6s ease-in-out';
+          setTimeout(() => {
+            modalContainer.style.animation = '';
+          }, 600);
+          
+          showInfoNotification(
+            '{% trans "Please Choose an Option" %}',
+            '{% trans "Use the buttons to either keep or remove the item from your cart." %}'
+          );
+        }
+      }
+    });
+
+    // Initialize cart data from DOM
+    document.addEventListener('DOMContentLoaded', function() {
+      const quantityInputs = document.querySelectorAll('input[name="quantity"]');
+      
+      // Build cart items data
+      quantityInputs.forEach(input => {
+        const productId = input.getAttribute('data-product-id');
+        const unitPriceAttr = input.getAttribute('data-unit-price');
+        const unitPrice = parseFloat(unitPriceAttr);
+        const quantity = parseInt(input.value);
+        
+        console.log('Processing product:', productId, 'Unit price attr:', unitPriceAttr, 'Parsed price:', unitPrice, 'Quantity:', quantity);
+        
+        // Ensure we have valid data
+        if (productId && !isNaN(unitPrice) && !isNaN(quantity) && unitPrice > 0 && quantity > 0) {
+          cartData.items[productId] = {
+            unitPrice: unitPrice,
+            quantity: quantity,
+            total: unitPrice * quantity
+          };
+          console.log('Added to cart data:', cartData.items[productId]);
+        } else {
+          console.warn('Invalid cart item data for product:', productId, {
+            unitPriceAttr: unitPriceAttr,
+            unitPrice: unitPrice,
+            quantity: quantity,
+            isNaN_unitPrice: isNaN(unitPrice),
+            isNaN_quantity: isNaN(quantity)
+          });
+        }
+      });
+
+      console.log('Cart data initialized:', cartData);
+
+      // Add instant update functionality to quantity inputs
+      quantityInputs.forEach(input => {
+        input.classList.add('quantity-input');
+        input.setAttribute('min', '1');
+        input.setAttribute('max', '99');
+        
+        let updateTimeout;
+        
+        input.addEventListener('input', function() {
+          const currentValue = parseInt(this.value) || 1;
+          const productId = this.getAttribute('data-product-id');
+          const unitPriceAttr = this.getAttribute('data-unit-price');
+          const unitPrice = parseFloat(unitPriceAttr);
+          
+          console.log('Quantity changed:', { 
+            productId, 
+            currentValue, 
+            unitPriceAttr, 
+            unitPrice,
+            cartDataItem: cartData.items[productId]
+          });
+          
+          // Validate input
+          if (currentValue < 1) {
+            this.value = 1;
+            showWarningNotification(
+              '{% trans "Invalid Quantity" %}',
+              '{% trans "Quantity must be at least 1" %}'
+            );
+            return;
+          }
+          if (currentValue > 99) {
+            this.value = 99;
+            showWarningNotification(
+              '{% trans "Maximum Quantity" %}',
+              '{% trans "Maximum quantity allowed is 99" %}'
+            );
+            return;
+          }
+
+          // Update cart data instantly
+          if (cartData.items[productId] && !isNaN(unitPrice)) {
+            cartData.items[productId].quantity = currentValue;
+            cartData.items[productId].total = unitPrice * currentValue;
+            
+            console.log('Updated cart data for product:', productId, cartData.items[productId]);
+            
+            // Update UI instantly
+            updateCartDisplay();
+            
+            // Show visual feedback
+            this.classList.add('quantity-updating-feedback');
+            
+            // Clear previous timeout
+            clearTimeout(updateTimeout);
+            
+            // Set timeout for server sync
+            updateTimeout = setTimeout(() => {
+              syncWithServer(productId, currentValue, this);
+              this.classList.remove('quantity-updating-feedback');
+            }, 800);
+          } else {
+            console.error('Product not found in cart data or invalid unit price:', {
+              productId: productId,
+              cartDataExists: !!cartData.items[productId],
+              unitPrice: unitPrice,
+              isNaN_unitPrice: isNaN(unitPrice)
+            });
+          }
+        });
+        
+        // Handle other events
+        input.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            clearTimeout(updateTimeout);
+            const productId = this.getAttribute('data-product-id');
+            const currentValue = parseInt(this.value) || 1;
+            syncWithServer(productId, currentValue, this);
+            this.classList.remove('quantity-updating-feedback');
+          }
+        });
+        
+        input.addEventListener('blur', function() {
+          clearTimeout(updateTimeout);
+          const productId = this.getAttribute('data-product-id');
+          const currentValue = parseInt(this.value) || 1;
+          syncWithServer(productId, currentValue, this);
+          this.classList.remove('quantity-updating-feedback');
+        });
+        
+        // Handle spinner buttons if browser supports them
+        input.addEventListener('change', function() {
+          // Trigger input event to handle spinner button changes
+          this.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+      });
+
+      // Enhanced coupon functionality
+      setupCouponFunctionality();
+      
+      // Enhanced remove button functionality
+      setupRemoveButtons();
+    });
+
+    // Update cart display without page refresh
+    function updateCartDisplay() {
+      console.log('Updating cart display with data:', cartData);
+      
+      // Calculate new subtotal
+      let newSubtotal = 0;
+      Object.values(cartData.items).forEach(item => {
+        if (item && typeof item.total === 'number') {
+          newSubtotal += item.total;
+        }
+      });
+      cartData.subtotal = newSubtotal;
+
+      // Update individual item totals
+      Object.keys(cartData.items).forEach(productId => {
+        const item = cartData.items[productId];
+        if (!item) return;
+        
+        const itemTotalElement = document.querySelector(`.item-total[data-product-id="${productId}"]`);
+        if (itemTotalElement) {
+          const newTotal = item.total.toFixed(2);
+          itemTotalElement.innerHTML = `$${newTotal}`;
+          itemTotalElement.classList.add('instant-update-feedback');
+          setTimeout(() => {
+            itemTotalElement.classList.remove('instant-update-feedback');
+          }, 800);
+        }
+      });
+
+      // Update subtotal
+      const subtotalElement = document.getElementById('cart-subtotal');
+      if (subtotalElement) {
+        subtotalElement.innerHTML = `$${newSubtotal.toFixed(2)}`;
+        subtotalElement.classList.add('instant-update-feedback');
+        setTimeout(() => {
+          subtotalElement.classList.remove('instant-update-feedback');
+        }, 800);
+      }
+
+      // Calculate and update total with coupon
+      let newTotal = newSubtotal;
+      if (cartData.coupon && cartData.coupon.discount) {
+        const discount = (newSubtotal * cartData.coupon.discount) / 100;
+        newTotal = newSubtotal - discount;
+        
+        // Update discount display
+        const discountElement = document.getElementById('coupon-discount');
+        if (discountElement) {
+          discountElement.innerHTML = `- $${discount.toFixed(2)}`;
+          discountElement.classList.add('instant-update-feedback');
+          setTimeout(() => {
+            discountElement.classList.remove('instant-update-feedback');
+          }, 800);
+        }
+      }
+      
+      cartData.total = newTotal;
+
+      // Update total
+      const totalElement = document.getElementById('cart-total');
+      if (totalElement) {
+        totalElement.innerHTML = `<strong>$${newTotal.toFixed(2)}</strong>`;
+        totalElement.classList.add('instant-update-feedback');
+        setTimeout(() => {
+          totalElement.classList.remove('instant-update-feedback');
+        }, 800);
+      }
+
+      // Update header cart info if it exists
+      updateHeaderCartInfo();
+      
+      console.log('Cart display updated. New totals:', { subtotal: newSubtotal, total: newTotal });
+    }
+
+    // Sync with server in background
+    function syncWithServer(productId, quantity, inputElement) {
+      const form = inputElement.closest('form');
+      const formData = new FormData(form);
+      
+      // Ensure the quantity is set correctly in the form
+      formData.set('quantity', quantity);
+      
+      // Get CSRF token
+      const csrfToken = form.querySelector('[name="csrfmiddlewaretoken"]').value;
+      
+      // Show syncing state
+      inputElement.classList.add('price-updating');
+      
+      console.log('Syncing with server:', { productId, quantity, formAction: form.action, csrfToken: csrfToken });
+      
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrfToken,
+        }
+      })
+      .then(response => {
+        console.log('Server response status:', response.status);
+        if (response.ok) {
+          return response.json(); // Parse JSON response
+        } else {
+          throw new Error(`Server error: ${response.status}`);
+        }
+      })
+      .then(data => {
+        console.log('Server response data:', data);
+        
+        if (data.success) {
+          // Update cart data with server response
+          cartData.total = data.cart_total_after_discount;
+          cartData.subtotal = data.cart_total;
+          
+          // Update the specific item in cart data
+          if (cartData.items[productId]) {
+            cartData.items[productId].quantity = quantity;
+            cartData.items[productId].total = cartData.items[productId].unitPrice * quantity;
+          }
+          
+          // Update original value for comparison
+          inputElement.setAttribute('data-original-value', quantity);
+          inputElement.classList.remove('price-updating');
+          
+          // Update the display
+          updateCartDisplay();
+          
+          // Show success feedback
+          inputElement.classList.add('instant-update-feedback');
+          setTimeout(() => {
+            inputElement.classList.remove('instant-update-feedback');
+          }, 800);
+          
+          // Show success notification
+          showSuccessNotification(
+            '{% trans "Cart Updated" %}',
+            '{% trans "Your cart has been updated successfully" %}'
+          );
+          
+          console.log('Cart updated successfully for product:', productId);
+        } else {
+          throw new Error('Server returned success=false');
+        }
+      })
+      .catch(error => {
+        console.error('Error syncing with server:', error);
+        
+        // Revert changes on error
+        const originalValue = parseInt(inputElement.getAttribute('data-original-value'));
+        inputElement.value = originalValue;
+        
+        if (cartData.items[productId]) {
+          cartData.items[productId].quantity = originalValue;
+          cartData.items[productId].total = cartData.items[productId].unitPrice * originalValue;
+          updateCartDisplay();
+        }
+        
+        inputElement.classList.remove('price-updating');
+        showErrorNotification(
+          '{% trans "Update Failed" %}',
+          '{% trans "Failed to update quantity. Your cart has been reverted to the previous state." %}'
+        );
+      });
+    }
+
+    // Update header cart info
+    function updateHeaderCartInfo() {
+      const headerCartElement = document.querySelector('.cart');
+      if (headerCartElement) {
+        const totalItems = Object.values(cartData.items).reduce((sum, item) => sum + item.quantity, 0);
+        const totalPrice = cartData.total.toFixed(2);
+        
+        // Find the cart badge and update it
+        const cartBadge = headerCartElement.querySelector('.cart-badge');
+        const cartContent = headerCartElement.querySelector('.mt-2');
+        const cartIcon = headerCartElement.querySelector('.cart-icon');
+        
+        if (totalItems > 0) {
+          // Update cart badge with animation
+          if (cartBadge) {
+            cartBadge.textContent = totalItems;
+            cartBadge.style.display = 'inline-block';
+            cartBadge.classList.add('updating');
+            setTimeout(() => {
+              cartBadge.classList.remove('updating');
+            }, 600);
+          }
+          
+          // Update cart content
+          if (cartContent) {
+            const pluralS = totalItems > 1 ? 's' : '';
+            cartContent.innerHTML = `
+              {% trans "Your cart" %}:
+              <a href="{% url "cart:cart_detail" %}">
+                ${totalItems} item${pluralS}, $${totalPrice}
+              </a>
+            `;
+            
+            // Add subtle flash effect to the content
+            cartContent.style.transition = 'all 0.3s ease';
+            cartContent.style.color = '#10b981';
+            setTimeout(() => {
+              cartContent.style.color = '';
+            }, 300);
+          }
+          
+          // Show cart icon if hidden
+          if (cartIcon) {
+            cartIcon.style.display = 'block';
+          }
+        } else {
+          // Hide cart badge
+          if (cartBadge) {
+            cartBadge.style.display = 'none';
+          }
+          
+          // Update cart content to show empty state
+          if (cartContent) {
+            cartContent.innerHTML = '{% trans "Your cart is empty." %}';
+            cartContent.style.color = '#6b7280';
+          }
+        }
+        
+        // Add visual feedback to show the update
+        headerCartElement.style.transition = 'all 0.3s ease';
+        headerCartElement.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+          headerCartElement.style.transform = 'scale(1)';
+        }, 200);
+        
+        console.log('Header cart updated:', { totalItems, totalPrice });
+      } else {
+        console.warn('Header cart element not found');
+      }
+    }
+
+    // Enhanced coupon functionality
+    function setupCouponFunctionality() {
+      const couponInput = document.querySelector('input[name="code"]');
+      const couponForm = document.getElementById('coupon-form');
+      const applyBtn = document.getElementById('apply-coupon-btn');
+      
+      if (couponInput && couponForm) {
+        couponInput.addEventListener('input', function() {
+          const value = this.value.trim();
+          
+          if (value.length === 0) {
+            applyBtn.innerHTML = '<i class="fas fa-check me-1"></i>{% trans "Apply" %}';
+            applyBtn.disabled = false;
+          } else if (value.length < 3) {
+            applyBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>{% trans "Too Short" %}';
+            applyBtn.disabled = true;
+          } else {
+            applyBtn.innerHTML = '<i class="fas fa-check me-1"></i>{% trans "Apply Coupon" %}';
+            applyBtn.disabled = false;
+          }
+        });
+        
+        couponForm.addEventListener('submit', function(e) {
+          const couponCode = couponInput.value.trim();
+          
+          if (couponCode.length === 0) {
+            e.preventDefault();
+            showWarningNotification(
+              '{% trans "Coupon Code Required" %}',
+              '{% trans "Please enter a coupon code before applying. You can find valid coupon codes in our promotions section." %}'
+            );
+            couponInput.focus();
+            
+            // Add shake animation to input
+            couponInput.style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+              couponInput.style.animation = '';
+            }, 500);
+            return;
+          }
+          
+          if (couponCode.length < 3) {
+            e.preventDefault();
+            showWarningNotification(
+              '{% trans "Invalid Coupon Code" %}',
+              '{% trans "Coupon code must be at least 3 characters long. Please check your code and try again." %}'
+            );
+            couponInput.focus();
+            return;
+          }
+          
+          applyBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>{% trans "Applying..." %}';
+          applyBtn.disabled = true;
+          
+          // Show info notification for processing
+          showInfoNotification(
+            '{% trans "Processing Coupon" %}',
+            '{% trans "Validating your coupon code, please wait..." %}'
+          );
+        });
+      }
+    }
+
+    // Enhanced remove button functionality with stunning modal
+    function setupRemoveButtons() {
+      document.querySelectorAll('.btn-remove').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // Get product information
+          const productName = this.closest('tr').querySelector('.product-info h5').textContent.trim();
+          const removeUrl = this.href;
+          
+          // Show the stunning confirmation modal
+          showConfirmationModal(productName, removeUrl);
+        });
+      });
+    }
+
+    // Add smooth scrolling
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+  </script>
 {% endblock %}

@@ -2,6 +2,10 @@ from braintree import Configuration, Environment
 from django.utils.translation import gettext_lazy as _
 import os
 from django.core.management.utils import get_random_secret_key
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -15,7 +19,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False") == "True"
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS",
                           "127.0.0.1,localhost").split(",")
@@ -25,6 +29,10 @@ DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 # Application definition
 
 INSTALLED_APPS = [
+    # 'jazzmin',
+    # 'daisyui_dashboard', # on top of default django admin 
+    'grappelli',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,6 +49,8 @@ INSTALLED_APPS = [
     'rosetta',
     'parler',
     'localflavor',
+
+    'bootstrap3',
 ]
 
 MIDDLEWARE = [
@@ -59,7 +69,7 @@ ROOT_URLCONF = 'myshop.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -139,11 +149,20 @@ USE_L10N = True
 USE_TZ = True
 
 
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/dev/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+
+# STATIC_ROOT is where collectstatic will collect all static files
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles/')
+
+# STATICFILES_DIRS tells Django where to look for static files in addition to app/static/ directories
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static/'),
+]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
@@ -151,25 +170,57 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 CART_SESSION_ID = 'cart'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email settings for Gmail SMTP
+# Load email configuration from environment variables
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'MyShop <noreply@myshop.com>')
+SERVER_EMAIL = os.getenv('SERVER_EMAIL', EMAIL_HOST_USER)
+
+# Optional: For development, you can also use console backend alongside SMTP
+# Uncomment the lines below if you want to see emails in console AND send them
+if DEBUG:
+    # Uncomment this line to use console backend instead of SMTP in development
+    # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    pass
 
 
 # Braintree settings
 # Note that we use Environment.Sandbox for integrating the sandbox. Once you go live and create a real account, you will need to change this to Environment.Production. Braintree will provide you with a new merchant ID and private/public keys for the production environment.
-BRAINTREE_MERCHANT_ID = ''
-BRAINTREE_PUBLIC_KEY = ''
-BRAINTREE_PRIVATE_KEY = ''
 
+# Get Braintree credentials from environment variables
+BRAINTREE_MERCHANT_ID = os.getenv('BRAINTREE_MERCHANT_ID', 'sandbox_merchant_id')
+BRAINTREE_PUBLIC_KEY = os.getenv('BRAINTREE_PUBLIC_KEY', 'sandbox_public_key')
+BRAINTREE_PRIVATE_KEY = os.getenv('BRAINTREE_PRIVATE_KEY', 'sandbox_private_key')
 
-Configuration.configure(
-    Environment.Sandbox,
-    # Environment.Production,
-    BRAINTREE_MERCHANT_ID,
-    BRAINTREE_PUBLIC_KEY,
-    BRAINTREE_PRIVATE_KEY
-)
-
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+# Only configure Braintree if credentials are properly set
+if all([BRAINTREE_MERCHANT_ID != 'sandbox_merchant_id', 
+        BRAINTREE_PUBLIC_KEY != 'sandbox_public_key', 
+        BRAINTREE_PRIVATE_KEY != 'sandbox_private_key']):
+    Configuration.configure(
+        Environment.Sandbox,
+        # Environment.Production,
+        BRAINTREE_MERCHANT_ID,
+        BRAINTREE_PUBLIC_KEY,
+        BRAINTREE_PRIVATE_KEY
+    )
+else:
+    # Development mode - use dummy configuration
+    print("⚠️  WARNING: Using development mode without real Braintree credentials")
+    print("   To enable payment processing, set the following environment variables:")
+    print("   - BRAINTREE_MERCHANT_ID")
+    print("   - BRAINTREE_PUBLIC_KEY") 
+    print("   - BRAINTREE_PRIVATE_KEY")
+    Configuration.configure(
+        Environment.Sandbox,
+        'your_merchant_id',
+        'your_public_key',
+        'your_private_key'
+    )
 
 
 # django-parler
@@ -184,10 +235,14 @@ PARLER_LANGUAGES = {
     }
 }
 
-# redis config
-REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
-REDIS_DB = 1
+# Redis configuration
+# Load Redis settings from environment variables
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
+REDIS_DB = int(os.getenv('REDIS_DB', '1'))
 CART_REDIS_KEY = 'cart'
+
+# Grappelli settings
+GRAPPELLI_ADMIN_TITLE = 'Admin Dashboard'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

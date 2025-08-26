@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.contrib import messages
+from django.utils.translation import gettext as _
 from .models import Coupon
 from .forms import CouponApplyForm
 
@@ -16,8 +18,24 @@ def coupon_apply(request):
                                         valid_to__gte=now,
                                         active=True)
             request.session['coupon_id'] = coupon.id
+            messages.success(request, _('Coupon "{}" applied successfully! You saved {}% on your order.').format(code, coupon.discount))
         except Coupon.DoesNotExist:
             request.session['coupon_id'] = None
+            # Check if coupon exists but is expired/inactive
+            try:
+                expired_coupon = Coupon.objects.get(code__iexact=code)
+                if not expired_coupon.active:
+                    messages.error(request, _('Coupon "{}" is no longer active. Please try a different coupon code.').format(code))
+                elif expired_coupon.valid_to < now:
+                    messages.error(request, _('Coupon "{}" has expired. Please check our current promotions for valid codes.').format(code))
+                elif expired_coupon.valid_from > now:
+                    messages.error(request, _('Coupon "{}" is not yet valid. Please check the promotion start date.').format(code))
+                else:
+                    messages.error(request, _('Coupon "{}" is not valid at this time.').format(code))
+            except Coupon.DoesNotExist:
+                messages.error(request, _('Coupon code "{}" does not exist. Please check the code and try again, or browse our current promotions.').format(code))
+    else:
+        messages.error(request, _('Please enter a valid coupon code.'))
     return redirect('cart:cart_detail')
 
 

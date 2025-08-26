@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation - MyShop</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .email-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #10b981, #059669, #6366f1, #8b5cf6);
+            background-size: 200% 100%;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { background-position: 200% 0; }
+            50% { background-position: -200% 0; }
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #6366f1 100%);
+            color: white;
+            padding: 50px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 50%, transparent 70%);
+            animation: headerGlow 6s ease-in-out infinite;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="sparkles" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="1" fill="white" opacity="0.3"><animate attributeName="opacity" values="0.3;1;0.3" dur="3s" repeatCount="indefinite"/></circle><circle cx="15" cy="15" r="0.5" fill="white" opacity="0.2"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2s" repeatCount="indefinite"/></circle></pattern></defs><rect width="100" height="100" fill="url(%23sparkles)"/></svg>');
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        @keyframes headerGlow {
+            0%, 100% { 
+                transform: rotate(0deg) scale(1); 
+                opacity: 1;
+            }
+            33% { 
+                transform: rotate(120deg) scale(1.1); 
+                opacity: 0.8;
+            }
+            66% { 
+                transform: rotate(240deg) scale(0.9); 
+                opacity: 0.9;
+            }
+        }
+        
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 900;
+            margin-bottom: 15px;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            position: relative;
+            z-index: 2;
+            background: linear-gradient(45deg, #ffffff, #f0f9ff, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleShimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes titleShimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        @keyframes iconPulse {
+            0%, 100% { 
+                transform: scale(1); 
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            }
+            50% { 
+                transform: scale(1.05); 
+                box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4);
+            }
+        }
+        
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.2));
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 25px auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: iconPulse 2s ease-in-out infinite;
+            z-index: 2;
+        }
+        
+        .success-icon::before {
+            content: '🎉';
+            font-size: 3rem;
+            animation: iconRotate 4s ease-in-out infinite;
+        }
+        
+        .success-icon::after {
+            content: '✓';
+            position: absolute;
+            font-size: 2rem;
+            color: #10b981;
+            font-weight: 900;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            z-index: 1;
+        }
+        
+        @keyframes iconRotate {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg); }
+            75% { transform: rotate(10deg); }
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+            color: #1f2937;
+            font-weight: 600;
+        }
+        
+        .order-summary {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+            border: 2px solid rgba(99, 102, 241, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .order-summary::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #6366f1, #8b5cf6, #10b981, #f59e0b);
+            border-radius: 16px;
+            z-index: -1;
+            opacity: 0.3;
+            animation: borderGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes borderGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+        
+        .order-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .order-title::before {
+            content: '🛍️';
+            font-size: 1.3rem;
+        }
+        
+        .order-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .detail-item {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(99, 102, 241, 0.1);
+        }
+        
+        .detail-label {
+            font-size: 0.9rem;
+            color: #6b7280;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .items-list {
+            margin-top: 25px;
+        }
+        
+        .items-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .items-title::before {
+            content: '📦';
+            font-size: 1.1rem;
+        }
+        
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        
+        .item:last-child {
+            border-bottom: none;
+        }
+        
+        .item-info {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        
+        .item-quantity {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        
+        .item-price {
+            font-weight: 700;
+            color: #059669;
+            font-size: 1.1rem;
+        }
+        
+        .total-section {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 25px;
+            text-align: center;
+        }
+        
+        .total-amount {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #059669;
+            text-shadow: 0 2px 10px rgba(5, 150, 105, 0.3);
+        }
+        
+        .total-label {
+            font-size: 1.1rem;
+            color: #065f46;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .next-steps {
+            background: rgba(245, 158, 11, 0.1);
+            border: 2px solid rgba(245, 158, 11, 0.2);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        
+        .next-steps h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .next-steps h3::before {
+            content: '🚀';
+            font-size: 1.2rem;
+        }
+        
+        .next-steps ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .next-steps li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: #92400e;
+            font-weight: 500;
+        }
+        
+        .next-steps li::before {
+            content: '✨';
+            font-size: 1rem;
+            margin-top: 2px;
+        }
+        
+        .support-section {
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid rgba(59, 130, 246, 0.2);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .support-section h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1d4ed8;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .support-section h3::before {
+            content: '💬';
+            font-size: 1.2rem;
+        }
+        
+        .support-section p {
+            color: #1e40af;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+        
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .contact-item {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            font-weight: 600;
+            color: #1d4ed8;
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, #1f2937, #111827);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .footer h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #f9fafb;
+        }
+        
+        .footer p {
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+        
+        .social-links {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .social-link {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        /* Responsive design */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 30px 20px;
+            }
+            
+            .order-details {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .contact-info {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="success-icon"></div>
+            <h1>🎉 Order Confirmed!</h1>
+            <p>Thank you for shopping with MyShop</p>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">
+                Hello {{ order.first_name }} {{ order.last_name }},
+            </div>
+            
+            <p>We're excited to confirm that your order has been successfully placed and is now being processed! Get ready for an amazing shopping experience.</p>
+            
+            <div class="order-summary">
+                <div class="order-title">Order Summary</div>
+                
+                <div class="order-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Order Number</div>
+                        <div class="detail-value">#{{ order.id }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Order Date</div>
+                        <div class="detail-value">{{ order.created|date:"F d, Y" }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Payment Status</div>
+                        <div class="detail-value" style="color: #059669;">✓ Paid</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Shipping Address</div>
+                        <div class="detail-value">{{ order.address }}, {{ order.city }}</div>
+                    </div>
+                </div>
+                
+                <div class="items-list">
+                    <div class="items-title">Items Ordered</div>
+                    {% for item in order.items.all %}
+                    <div class="item">
+                        <div class="item-info">
+                            <div class="item-name">{{ item.product.name }}</div>
+                            <div class="item-quantity">Quantity: {{ item.quantity }}</div>
+                        </div>
+                        <div class="item-price">${{ item.get_cost|floatformat:"2" }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="total-section">
+                    <div class="total-label">Total Amount</div>
+                    <div class="total-amount">${{ order.get_total_cost|floatformat:"2" }}</div>
+                </div>
+            </div>
+            
+            <div class="next-steps">
+                <h3>What happens next?</h3>
+                <ul>
+                    <li>Your order is being prepared by our team</li>
+                    <li>You'll receive a shipping confirmation within 24-48 hours</li>
+                    <li>Track your package using the tracking number we'll send</li>
+                    <li>Enjoy your new purchases!</li>
+                </ul>
+            </div>
+            
+            <div class="support-section">
+                <h3>Need Help?</h3>
+                <p>Our friendly customer support team is here to assist you!</p>
+                <div class="contact-info">
+                    <div class="contact-item">📞 1-800-MYSHOP</div>
+                    <div class="contact-item">📧 support@myshop.com</div>
+                    <div class="contact-item">💬 Live Chat</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <h3>MyShop</h3>
+            <p>Your favorite online shopping destination</p>
+            <p>© 2025 MyShop. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#" class="social-link">📘</a>
+                <a href="#" class="social-link">🐦</a>
+                <a href="#" class="social-link">📷</a>
+                <a href="#" class="social-link">💼</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

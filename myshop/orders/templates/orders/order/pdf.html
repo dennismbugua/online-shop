@@ -1,49 +1,482 @@
-<html> 
-<body> 
-  <h1>My Shop</h1> 
-  <p> 
-    Invoice no. {{ order.id }}</br> 
-    <span class="secondary"> 
-      {{ order.created|date:"M d, Y" }} 
-    </span> 
-  </p> 
- 
-  <h3>Bill to</h3> 
-  <p> 
-    {{ order.first_name }} {{ order.last_name }}<br> 
-    {{ order.email }}<br> 
-    {{ order.address }}<br> 
-    {{ order.postal_code }}, {{ order.city }} 
-  </p> 
- 
-  <h3>Items bought</h3> 
-  <table> 
-    <thead> 
-      <tr> 
-        <th>Product</th> 
-        <th>Price</th> 
-        <th>Quantity</th> 
-        <th>Cost</th> 
-      </tr> 
-    </thead> 
-    <tbody> 
-      {% for item in order.items.all %} 
-        <tr class="row{% cycle "1" "2" %}"> 
-          <td>{{ item.product.name }}</td> 
-          <td class="num">${{ item.price }}</td> 
-          <td class="num">{{ item.quantity }}</td> 
-          <td class="num">${{ item.get_cost }}</td> 
-        </tr> 
-      {% endfor %} 
-      <tr class="total"> 
-        <td colspan="3">Total</td> 
-        <td class="num">${{ order.get_total_cost }}</td> 
-      </tr> 
-    </tbody> 
-  </table> 
-     
-  <span class="{% if order.paid %}paid{% else %}pending{% endif %}"> 
-    {% if order.paid %}Paid{% else %}Pending payment{% endif %} 
-  </span> 
-</body> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>MyShop Order #{{ order.id }} - Premium Receipt</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 40px;
+            font-size: 14px;
+        }
+        
+        .receipt-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .receipt-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #10b981, #059669, #6366f1, #8b5cf6);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="white" opacity="0.05"/><circle cx="10" cy="50" r="1" fill="white" opacity="0.05"/><circle cx="90" cy="30" r="1" fill="white" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header .subtitle {
+            font-size: 18px;
+            font-weight: 400;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .order-banner {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .order-number {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .order-date {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .info-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+        }
+        
+        .info-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-card h3::before {
+            content: '👤';
+            font-size: 16px;
+        }
+        
+        .order-details h3::before {
+            content: '📋';
+        }
+        
+        .info-card p {
+            margin-bottom: 8px;
+            color: #6b7280;
+        }
+        
+        .info-card strong {
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        .status-paid {
+            color: #059669;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+            display: inline-block;
+        }
+        
+        .status-pending {
+            color: #dc2626;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+            display: inline-block;
+        }
+        
+        .items-section {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title::before {
+            content: '🛍️';
+            font-size: 20px;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+        
+        .items-table thead {
+            background: linear-gradient(135deg, #374151, #4b5563);
+            color: white;
+        }
+        
+        .items-table th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .items-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+        }
+        
+        .items-table tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+        
+        .items-table tbody tr:hover {
+            background: #f3f4f6;
+        }
+        
+        .product-name {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .price {
+            font-weight: 600;
+            color: #059669;
+        }
+        
+        .quantity {
+            background: #e5e7eb;
+            padding: 4px 8px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .subtotal-row {
+            background: #f8fafc !important;
+            border-top: 2px solid #e5e7eb;
+        }
+        
+        .discount-row {
+            background: rgba(239, 68, 68, 0.05) !important;
+            color: #dc2626;
+        }
+        
+        .total-row {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        .total-row td {
+            border-bottom: none;
+            font-weight: 700;
+        }
+        
+        .coupon-section {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .coupon-section::before {
+            content: '🎫';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 50%;
+            font-size: 16px;
+        }
+        
+        .coupon-section h4 {
+            color: #065f46;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .coupon-section p {
+            color: #047857;
+            margin-bottom: 5px;
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            position: relative;
+        }
+        
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border-radius: 2px;
+        }
+        
+        .footer p {
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .footer .generated-date {
+            font-weight: 600;
+            color: #374151;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .thank-you {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+        }
+        
+        .thank-you h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .thank-you p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        /* Print optimizations */
+        @media print {
+            body {
+                background: white;
+                padding: 20px;
+            }
+            
+            .receipt-container {
+                box-shadow: none;
+                border: 1px solid #e5e7eb;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="header">
+            <h1>🛍️ MyShop</h1>
+            <p class="subtitle">Premium Order Receipt</p>
+        </div>
+
+        <div class="content">
+            <div class="order-banner">
+                <div class="order-number">Order #{{ order.id }}</div>
+                <div class="order-date">{{ order.created|date:"F d, Y \a\t H:i" }}</div>
+            </div>
+
+            <div class="thank-you">
+                <h2>Thank You for Your Order!</h2>
+                <p>We appreciate your business and trust in MyShop</p>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card customer-info">
+                    <h3>Customer Information</h3>
+                    <p><strong>Name:</strong> {{ order.first_name }} {{ order.last_name }}</p>
+                    <p><strong>Email:</strong> {{ order.email }}</p>
+                    <p><strong>Shipping Address:</strong><br>
+                        {{ order.address }}<br>
+                        {{ order.postal_code }} {{ order.city }}
+                    </p>
+                </div>
+                
+                <div class="info-card order-details">
+                    <h3>Order Details</h3>
+                    <p><strong>Order Number:</strong> #{{ order.id }}</p>
+                    <p><strong>Order Date:</strong> {{ order.created|date:"F d, Y" }}</p>
+                    <p><strong>Payment Status:</strong> 
+                        {% if order.paid %}
+                            <span class="status-paid">✅ Paid</span>
+                        {% else %}
+                            <span class="status-pending">⏳ Pending Payment</span>
+                        {% endif %}
+                    </p>
+                    {% if order.braintree_id %}
+                        <p><strong>Transaction ID:</strong> {{ order.braintree_id }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="items-section">
+                <h3 class="section-title">Order Items</h3>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                            <tr>
+                                <td class="product-name">{{ item.product.name }}</td>
+                                <td class="price">${{ item.price|floatformat:2 }}</td>
+                                <td><span class="quantity">{{ item.quantity }}</span></td>
+                                <td class="price">${{ item.get_cost|floatformat:2 }}</td>
+                            </tr>
+                        {% endfor %}
+                        {% if order.coupon %}
+                            <tr class="subtotal-row">
+                                <td colspan="3"><strong>Subtotal:</strong></td>
+                                <td class="price"><strong>${{ order.get_total_cost_before_discount|floatformat:2 }}</strong></td>
+                            </tr>
+                            <tr class="discount-row">
+                                <td colspan="3"><strong>🎫 Discount ({{ order.coupon.code }}):</strong></td>
+                                <td><strong>-${{ order.get_discount|floatformat:2 }}</strong></td>
+                            </tr>
+                        {% endif %}
+                        <tr class="total-row">
+                            <td colspan="3"><strong>💰 Total Amount:</strong></td>
+                            <td><strong>${{ order.get_total_cost|floatformat:2 }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            {% if order.coupon %}
+                <div class="coupon-section">
+                    <h4>Applied Coupon Details</h4>
+                    <p><strong>Coupon Code:</strong> {{ order.coupon.code }}</p>
+                    <p><strong>Discount Applied:</strong> {{ order.discount }}% off</p>
+                    <p><strong>Savings:</strong> ${{ order.get_discount|floatformat:2 }}</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="footer">
+            <p><strong>🔒 This is an officially generated receipt for your MyShop order.</strong></p>
+            <p>📞 Questions? Contact our customer service: support@myshop.com</p>
+            <p>🚚 Track your order status in your MyShop account</p>
+            <p class="generated-date">📅 Generated on {{ "now"|date:"F d, Y \a\t H:i" }}</p>
+        </div>
+    </div>
+</body>
 </html> 

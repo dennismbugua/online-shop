@@ -1,0 +1,127 @@
+/* 
+  Three-column layout for Django Admin Product List View 
+  - Sidebar: 4 columns
+  - Main Content: 6 columns
+  - Filter: 2 columns
+*/
+
+/* Use flexbox for the main layout */
+body.app-shop.model-product #container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/* Sidebar navigation (col-4) */
+body.app-shop.model-product #nav-sidebar {
+    flex: 0 0 33.3333%;
+    max-width: 33.3333%;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+/* Main content area (col-8) */
+body.app-shop.model-product .main {
+    flex: 0 0 66.6667%;
+    max-width: 66.6667%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Inside the main content, use flexbox for main list and filter */
+body.app-shop.model-product #changelist {
+    display: flex;
+    flex: 1;
+}
+
+/* Main content (col-6 of total 12) */
+body.app-shop.model-product #changelist-form {
+    flex: 0 0 75%; /* 6 out of 8 columns for the main area */
+    max-width: 75%;
+}
+
+/* Filter section (col-2 of total 12) */
+body.app-shop.model-product #changelist-filter {
+    flex: 0 0 25%; /* 2 out of 8 columns for the main area */
+    max-width: 25%;
+    padding-left: 15px;
+}
+
+/* Ensure header and breadcrumbs span the main content area */
+body.app-shop.model-product #header,
+body.app-shop.model-product .breadcrumbs {
+    width: 100%;
+}
+
+/* Make top header clearly visible and stay on top of the sidebar */
+body.app-shop.model-product #header {
+    position: sticky;
+    top: 0;
+    z-index: 1100; /* sit above the sidebar */
+    background: var(--admin-header-bg, #ffffff);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    padding: 10px 20px;
+}
+
+/* Position breadcrumbs directly below the header and above main content */
+body.app-shop.model-product .breadcrumbs {
+    position: relative;
+    z-index: 1050;
+    margin: 0;
+    padding: 8px 20px;
+    background: var(--admin-breadcrumbs-bg, transparent);
+}
+
+/* Ensure the main content sits below the breadcrumbs */
+body.app-shop.model-product .main {
+    margin-top: 0; /* layout flow places it below .breadcrumbs */
+    padding-top: 12px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    /* Stack main content and filter on medium screens */
+    body.app-shop.model-product #changelist {
+        flex-direction: column;
+    }
+
+    body.app-shop.model-product #changelist-form,
+    body.app-shop.model-product #changelist-filter {
+        max-width: 100%;
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Stack sidebar and main content on small screens */
+    body.app-shop.model-product #nav-sidebar,
+    body.app-shop.model-product .main {
+        flex: 0 0 100%;
+        max-width: 100%;
+        position: static;
+        height: auto;
+    }
+
+    /* On small screens ensure header and breadcrumbs span full width and are above sidebar */
+    @media (max-width: 768px) {
+        body.app-shop.model-product #header {
+            position: sticky;
+            top: 0;
+            z-index: 1200;
+            width: 100%;
+        }
+
+        body.app-shop.model-product .breadcrumbs {
+            position: relative;
+            z-index: 1150;
+            width: 100%;
+        }
+
+        /* Sidebar overlays from the left when opened on mobile; header remains visible */
+        body.app-shop.model-product #nav-sidebar {
+            z-index: 1100;
+        }
+    }
+}
+
